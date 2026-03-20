@@ -1,0 +1,49 @@
+<TelaTransacoes>:
+    orientation: "vertical"
+    padding: "20dp"
+    spacing: "15dp"
+
+    MDLabel:
+        text: "Nova Movimentação"
+        font_style: "H5"
+        halign: "center"
+        bold: True
+        size_hint_y: None
+        height: "60dp"
+
+    MDTextField:
+        id: campo_valor
+        hint_text: "Valor (R$)"
+        input_filter: "float"
+        input_type: "number"
+        mode: "outline"
+        icon_left: "currency-usd"
+
+    MDTextField:
+        id: campo_desc
+        hint_text: "Descrição (Ex: Salário, Mercado)"
+        mode: "outline"
+        icon_left: "text-short"
+
+    MDTextField:
+        id: campo_categoria
+        hint_text: "Categoria (Opcional)"
+        mode: "outline"
+        icon_left: "tag"
+
+    MDRaisedButton:
+        id: btn_tipo
+        text: "Selecionar Tipo: Receita"
+        pos_hint: {"center_x": .5}
+        size_hint_x: 0.9
+        on_release: root.abrir_menu()
+
+    MDFillRoundFlatButton:
+        text: "SALVAR NO BANCO"
+        pos_hint: {"center_x": .5}
+        size_hint_x: 0.9
+        md_bg_color: 0, .6, .3, 1 # Verde Sucesso
+        on_release: root.salvar()
+
+    Widget:
+        size_hint_y: 1
