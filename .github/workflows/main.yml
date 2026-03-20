@@ -5,8 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+# Esta seção é obrigatória para evitar o erro de 15 segundos
 permissions:
-  contents: write # Alterado para permitir a criação do arquivo
+  contents: write
 
 jobs:
   build:
@@ -37,11 +38,11 @@ jobs:
 
       - name: Build APK
         run: |
-          # O 'yes |' é vital para o GitHub não travar pedindo autorização
+          # O 'yes |' aceita as licenças automaticamente
           yes | buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-financas-apk
+          name: app-estatisticas-S25
           path: bin/*.apk
