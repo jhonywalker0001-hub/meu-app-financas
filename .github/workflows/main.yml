@@ -1,35 +1,35 @@
 name: Build APK Direto
 on:
   push:
-    branches: [ main, principal ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout do Codigo
         uses: actions/checkout@v4
 
-      - name: Configurar Java
+      - name: Configurar Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Instalar Buildozer
+      - name: Instalar Buildozer e Cython
         run: |
-          pip3 install --user buildozer Cython==0.29.33
+          pip3 install --user --upgrade buildozer Cython==0.29.33
 
-      - name: Gerar APK
+      - name: Executar Buildozer
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          # O yes aceita as licenças do Android sozinho
+          # O yes aceita todas as licenças do Android SDK automaticamente
           yes | buildozer android debug
 
-      - name: Salvar APK
+      - name: Upload do APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-financeiro-S25
+          name: meu-app-s25
           path: bin/*.apk
