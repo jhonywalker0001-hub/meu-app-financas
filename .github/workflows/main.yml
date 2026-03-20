@@ -1,4 +1,4 @@
-name: Build APK Final
+name: Build APK Direto
 on:
   push:
     branches: [ main, principal ]
@@ -6,33 +6,30 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04 # Versão mais estável para evitar erros de sistema
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Passo 1 - Baixar Codigo
+      - name: Checkout do Codigo
         uses: actions/checkout@v4
 
-      - name: Passo 2 - Configurar Java
+      - name: Configurar Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Passo 3 - Instalar Ferramentas de Compilacao
+      - name: Instalar Buildozer
         run: |
-          sudo apt update
-          sudo apt install -y build-essential git python3 python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev
-          sudo apt install -y libsqlite3-dev sqlite3 bzip2 libbz2-dev libc6-dev libgdbm-dev libncursesw5-dev libreadline-gplv2-dev libssl-dev tk-dev wget curl lzma liblzma-dev
-          pip3 install --user --upgrade buildozer Cython==0.29.33
+          pip3 install --user buildozer Cython==0.29.33
 
-      - name: Passo 4 - Gerar APK (Buildozer)
+      - name: Gerar APK
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          # O yes aceita as licenças do Android automaticamente
+          # O yes aceita as licenças do Android sozinho
           yes | buildozer android debug
 
-      - name: Passo 5 - Salvar APK
+      - name: Salvar APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-meu-financeiro
+          name: app-financeiro-S25
           path: bin/*.apk
