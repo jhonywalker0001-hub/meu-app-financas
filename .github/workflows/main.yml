@@ -11,7 +11,8 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Criar APK no Windows
+      - name: Rodar Buildozer no Windows
+        shell: cmd
         run: |
           pip install --upgrade pip
           pip install Cython==0.29.33 buildozer
