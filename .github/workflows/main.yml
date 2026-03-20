@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
