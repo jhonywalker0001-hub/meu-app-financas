@@ -1,8 +1,11 @@
-name: Build APK S25
+name: Build APK S25 Final
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -11,27 +14,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Java
+      - name: Configurar Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Instalar Dependencias do Sistema
+      - name: Instalar Buildozer e Dependencias
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav libgstreamer-plugins-base1.0-dev libpango1.0-dev libgl1-mesa-dev libgles2-mesa-dev python3-setuptools libffi-dev libssl-dev
-
-      - name: Compilar APK
-        run: |
+          sudo apt-get install -y python3-pip build-essential git python3-dev libsdl2-dev python3-setuptools libffi-dev libssl-dev
           pip3 install --user --upgrade Cython==0.29.33 buildozer
           export PATH=$PATH:$HOME/.local/bin
-          # O yes aceita as licenças do SDK automaticamente para evitar travas
+
+      - name: Gerar APK
+        run: |
+          export PATH=$PATH:$HOME/.local/bin
           yes | buildozer android debug
 
-      - name: Salvar APK
-        if: success()
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-estatisticas-S25
+          name: app-estatisticas-final
           path: bin/*.apk
