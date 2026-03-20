@@ -10,17 +10,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y python3-pip build-essential git python3 python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev
-          sudo apt install -y libsqlite3-dev sqlite3 bzip2 libbz2-dev libc6-dev libgdbm-dev libncursesw5-dev libreadline-gplv2-dev libssl-dev tk-dev wget curl lzma liblzma-dev
-          pip3 install --user --upgrade buildozer
-
       - name: Build with Buildozer
-        run: |
-          export PATH=$PATH:$HOME/.local/bin
-          buildozer android debug
+        # Esta ação é robusta e funciona bem em repositórios públicos
+        uses: ArtemSerebrenninkov/buildozer-action@v1
+        with:
+          buildozer_version: master
+          command: buildozer android debug
+          repository_root: .
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
