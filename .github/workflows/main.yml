@@ -17,13 +17,20 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Compilar
+      - name: Instalar Dependencias do Sistema
         run: |
-          pip3 install --user buildozer Cython==0.29.33
+          sudo apt-get update
+          sudo apt-get install -y python3-pip build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav libgstreamer-plugins-base1.0-dev libpango1.0-dev libgl1-mesa-dev libgles2-mesa-dev python3-setuptools libffi-dev libssl-dev
+
+      - name: Compilar APK
+        run: |
+          pip3 install --user --upgrade Cython==0.29.33 buildozer
           export PATH=$PATH:$HOME/.local/bin
+          # O yes aceita as licenças do Android SDK automaticamente
           yes | buildozer android debug
 
       - name: Salvar APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: app-estatisticas-S25
