@@ -8,29 +8,23 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout Código
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configurar Java 17
+      - name: Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Instalar Buildozer
+      - name: Compilar APK
         run: |
           pip3 install --user buildozer Cython==0.29.33
           export PATH=$PATH:$HOME/.local/bin
-
-      - name: Gerar APK
-        run: |
-          export PATH=$PATH:$HOME/.local/bin
-          # O comando 'yes' aceita as licenças do Android SDK automaticamente
           yes | buildozer android debug
 
-      - name: Upload do Arquivo
-        if: success()
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: aplicativo-S25-estatisticas
+          name: app-S25-estatisticas
           path: bin/*.apk
