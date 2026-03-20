@@ -1,4 +1,4 @@
-name: Build APK Final
+name: Build APK Sobrevivencia
 on:
   push:
     branches: [ main, principal ]
@@ -9,29 +9,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Passo 1 - Baixar Codigo
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Passo 2 - Configurar Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install Buildozer
+      - name: Passo 3 - Instalar Buildozer
         run: |
           pip3 install --user buildozer
           pip3 install --user Cython==0.29.33
 
-      - name: Build with Buildozer
+      - name: Passo 4 - Gerar APK
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          # O Buildozer vai baixar as dependências do Android automaticamente
-          # O 'yes |' aceita todas as licenças do Google sozinho
+          # O 'yes' responde 'sim' para todas as perguntas do Google
           yes | buildozer android debug
 
-      - name: Upload APK
+      - name: Passo 5 - Salvar Arquivo
         uses: actions/upload-artifact@v4
         with:
-          name: package
+          name: meu-app-final
           path: bin/*.apk
