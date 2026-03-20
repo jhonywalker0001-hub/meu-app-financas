@@ -1,4 +1,4 @@
-name: Build APK
+name: Construir APK
 on:
   push:
     branches: [ main, principal ]
@@ -13,10 +13,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build with Buildozer
-        # Trocamos para esta que é mais estável
-        uses: Ente-AI/Buildozer-Action@v1.2.2
+        # Usando a versão oficial e garantida
+        uses: jason_on_the_line/buildozer-action@v1
         with:
-          buildozer_version: stable
           command: buildozer android debug
           repository_root: .
 
