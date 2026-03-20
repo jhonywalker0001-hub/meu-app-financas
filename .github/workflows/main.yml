@@ -11,31 +11,14 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Configurar Python
-        uses: actions/setup-python@v5
+      - name: Build APK com Docker Oficial
+        uses: digisensei/buildozer-action@v1
         with:
-          python-version: "3.10"
+          command: android debug
+          buildozer_version: stable
 
-      - name: Instalar Dependências do Android
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential git python3-pip python3-dev \
-          libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
-          libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
-          openjdk-17-jdk-headless
-
-      - name: Instalar Buildozer e Cython
-        run: |
-          pip install --upgrade pip
-          pip install Cython==0.29.33 buildozer
-
-      - name: Criar o APK
-        run: |
-          yes | buildozer android debug
-
-      - name: Liberar o APK para Download
-        if: success()
+      - name: Salvar APK Gerado
         uses: actions/upload-artifact@v4
         with:
-          name: meu-app-financas
+          name: aplicativo-financas
           path: bin/*.apk
