@@ -1,4 +1,4 @@
-name: Build APK Financas
+name: Build APK Financas 2026
 on:
   push:
     branches: [ main ]
@@ -12,23 +12,25 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout código
-        uses: actions/checkout@v4 # Versão atualizada
+        uses: actions/checkout@v4
 
       - name: Configurar Python
-        uses: actions/setup-python@v5 # Versão atualizada
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
       - name: Configurar Java
-        uses: actions/setup-java@v4 # Versão atualizada
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Instalar Dependências do Sistema
+      - name: Dependências do Sistema
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good
+          sudo apt-get install -y build-essential git python3-pip python3-setuptools python3-dev \
+          libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+          libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev
 
       - name: Instalar Buildozer
         run: |
@@ -36,13 +38,13 @@ jobs:
           pip install Cython==0.29.33 buildozer
           export PATH=$PATH:$HOME/.local/bin
 
-      - name: Compilar APK
+      - name: Gerar APK
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          # O yes garante que o robô aceite os termos do Android automaticamente
+          # Aceita automaticamente as licenças do Android SDK
           yes | buildozer android debug
 
-      - name: Salvar APK Finanças
+      - name: Upload APK Finanças
         if: success()
         uses: actions/upload-artifact@v4
         with:
