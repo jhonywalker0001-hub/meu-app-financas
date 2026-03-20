@@ -1,4 +1,4 @@
-name: Build APK 2026
+name: Build APK 2026 Final
 on:
   push:
     branches: [ main ]
@@ -9,27 +9,30 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout Code
+      - name: 1. Baixar Código
         uses: actions/checkout@v4
 
-      - name: Setup Java 17
+      - name: 2. Configurar Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Instalar Buildozer
+      - name: 3. Preparar Buildozer
         run: |
+          pip3 install --user --upgrade pip
           pip3 install --user buildozer Cython==0.29.33
 
-      - name: Gerar APK
+      - name: 4. Gerar APK
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          # O 'yes' aceita as licenças do Android automaticamente
+          # O buildozer 'init' garante que ele reconheça seu buildozer.spec
+          # O 'yes' aceita as licenças do Google automaticamente
           yes | buildozer android debug
 
-      - name: Upload APK
+      - name: 5. Salvar APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: app-financeiro-S25
+          name: app-financeiro-final
           path: bin/*.apk
