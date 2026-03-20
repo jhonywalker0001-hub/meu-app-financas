@@ -1,25 +1,34 @@
-name: Build APK
+name: Build APK Manual
 on:
   push:
     branches: [ main, principal ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Build with Buildozer
-        # Esta ação é robusta e funciona bem em repositórios públicos
-        uses: ArtemSerebrenninkov/buildozer-action@v1
-        with:
-          buildozer_version: master
-          command: buildozer android debug
-          repository_root: .
+      - name: Install System Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip build-essential git python3 python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev
+          sudo apt install -y libsqlite3-dev sqlite3 bzip2 libbz2-dev libc6-dev libgdbm-dev libncursesw5-dev libreadline-gplv2-dev libssl-dev tk-dev wget curl lzma liblzma-dev
+          sudo apt install -y openjdk-17-jdk unzip zip
+          pip3 install --upgrade pip
+          pip3 install --user buildozer
 
-      - name: Upload APK
+      - name: Build APK with Buildozer
+        run: |
+          export PATH=$PATH:$HOME/.local/bin
+          # Aceita as licenças do Android SDK automaticamente
+          yes | buildozer android debug
+
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: package
+          name: meu-app-apk
           path: bin/*.apk
