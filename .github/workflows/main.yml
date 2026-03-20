@@ -1,4 +1,4 @@
-name: Build APK Final 2026
+name: Build APK Direto
 on:
   push:
     branches: [ main ]
@@ -6,33 +6,30 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04 # Versão mais compatível com ferramentas Android
+    runs-on: ubuntu-22.04
 
     steps:
-      - name: Passo 1 - Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Passo 2 - Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Passo 3 - Instalar Buildozer
+      - name: Instalar Buildozer
         run: |
-          # Atualiza apenas o pip e instala o essencial para evitar o erro 100
-          pip3 install --user --upgrade pip
           pip3 install --user buildozer Cython==0.29.33
 
-      - name: Passo 4 - Gerar APK
+      - name: Gerar APK
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          # Aceita automaticamente as licenças do Android SDK
+          # O 'yes' aceita as licenças do Android automaticamente
           yes | buildozer android debug
 
-      - name: Passo 5 - Upload do APK
-        if: success()
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-financeiro-final
+          name: app-S25-final
           path: bin/*.apk
