@@ -1,4 +1,4 @@
-name: Build APK Direto
+name: Build APK Final 2026
 on:
   push:
     branches: [ main ]
@@ -9,27 +9,31 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout do Codigo
+      - name: 1. Baixar seu Código
         uses: actions/checkout@v4
 
-      - name: Configurar Java 17
+      - name: 2. Preparar Java (Obrigatório)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Instalar Buildozer e Cython
+      - name: 3. Instalar Dependências de Sistema
         run: |
+          sudo apt update
+          sudo apt install -y build-essential git python3 python3-dev libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev
+          sudo apt install -y libsqlite3-dev sqlite3 bzip2 libbz2-dev libc6-dev libgdbm-dev libncursesw5-dev libreadline-gplv2-dev libssl-dev tk-dev wget curl lzma liblzma-dev
           pip3 install --user --upgrade buildozer Cython==0.29.33
 
-      - name: Executar Buildozer
+      - name: 4. Gerar APK (A fase demorada)
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          # O yes aceita todas as licenças do Android SDK automaticamente
+          # O yes aceita as licenças do Google automaticamente
           yes | buildozer android debug
 
-      - name: Upload do APK
+      - name: 5. Disponibilizar APK para Download
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: meu-app-s25
+          name: app-lotofacil-final
           path: bin/*.apk
