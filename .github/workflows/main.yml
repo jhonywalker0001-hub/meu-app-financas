@@ -8,23 +8,23 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout Código
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configurar Java 17
+      - name: Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Compilar com Buildozer
+      - name: Compilar
         run: |
           pip3 install --user buildozer Cython==0.29.33
           export PATH=$PATH:$HOME/.local/bin
           yes | buildozer android debug
 
-      - name: Disponibilizar APK
+      - name: Salvar APK
         uses: actions/upload-artifact@v4
         with:
-          name: aplicativo-estatisticas-S25
+          name: app-estatisticas-S25
           path: bin/*.apk
