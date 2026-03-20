@@ -1,8 +1,6 @@
-name: Construir APK
+name: Build APK
 on:
   push:
-    branches: [ main, principal ]
-  pull_request:
     branches: [ main, principal ]
 
 jobs:
@@ -13,9 +11,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build with Buildozer
-        # Usando a versão oficial e garantida
-        uses: jason_on_the_line/buildozer-action@v1
+        # Esta é a ação oficial e mais segura
+        uses: kivy/buildozer-action@master
         with:
+          save_buildozer_folder: true
+          buildozer_version: master
           command: buildozer android debug
           repository_root: .
 
