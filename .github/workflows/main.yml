@@ -29,9 +29,9 @@ jobs:
       - name: Criar o APK (Modo Silencioso)
         run: |
           yes | buildozer android debug
-        continue-on-error: false
 
       - name: Subir APK Final
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: app-S25-final
