@@ -1,4 +1,4 @@
-name: Build APK Sobrevivencia
+name: Build APK Resgate
 on:
   push:
     branches: [ main, principal ]
@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # Forçando uma versão de sistema mais compatível
 
     steps:
       - name: Passo 1 - Baixar Codigo
@@ -18,19 +18,21 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Passo 3 - Instalar Buildozer
+      - name: Passo 3 - Instalar Buildozer e Dependencias Graficas
         run: |
-          pip3 install --user buildozer
-          pip3 install --user Cython==0.29.33
+          pip3 install --user --upgrade buildozer Cython==0.29.33
+          # Instalando bibliotecas que o Matplotlib e Pandas exigem no Linux
+          sudo apt-get install -y libsqlite3-dev sqlite3 bzip2 libbz2-dev libc6-dev libgdbm-dev libncursesw5-dev libreadline-gplv2-dev libssl-dev tk-dev wget curl lzma liblzma-dev
 
-      - name: Passo 4 - Gerar APK
+      - name: Passo 4 - Gerar APK (Modo Verbose)
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          # O 'yes' responde 'sim' para todas as perguntas do Google
-          yes | buildozer android debug
-
+          # O 'debug' com o 'yes' agora vai detalhar o erro se parar
+          yes | buildozer -v android debug
+          
       - name: Passo 5 - Salvar Arquivo
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: meu-app-final
+          name: app-financas-s25
           path: bin/*.apk
