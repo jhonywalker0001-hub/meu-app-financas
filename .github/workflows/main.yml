@@ -12,38 +12,38 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout código
-        uses: actions/checkout@v4 # Atualizado
+        uses: actions/checkout@v4
 
       - name: Configurar Python
-        uses: actions/setup-python@v5 # Atualizado
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
       - name: Configurar Java
-        uses: actions/setup-java@v4 # Atualizado
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Dependências
+      - name: Instalar Dependências do Sistema
+        # Estas são as dependências reais exigidas pelo Buildozer para compilar Android
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential git python3-pip python3-dev \
-          libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
-          libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev
+          sudo apt-get install -y build-essential git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
 
       - name: Instalar Buildozer
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install Cython==0.29.33 buildozer
-          export PATH=$PATH:$HOME/.local/bin
+          # Adiciona o diretório do buildozer ao PATH global do GitHub Actions
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Build
+      - name: Build do APK
         run: |
-          export PATH=$PATH:$HOME/.local/bin
+          # O "yes" aceita automaticamente os termos de licença do Android SDK
           yes | buildozer android debug
 
-      - name: Artifact
+      - name: Upload Artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
