@@ -1,4 +1,4 @@
-name: Build APK Real
+name: Build APK Final
 on:
   push:
     branches: [ main, principal ]
@@ -18,21 +18,20 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install Dependencies
+      - name: Install Buildozer
         run: |
-          sudo apt update
-          sudo apt install -y python3-pip build-essential git python3 python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev
-          sudo apt install -y libsqlite3-dev sqlite3 bzip2 libbz2-dev libc6-dev libgdbm-dev libncursesw5-dev libreadline-gplv2-dev libssl-dev tk-dev wget curl lzma liblzma-dev
-          pip3 install --user --upgrade buildozer Cython
+          pip3 install --user buildozer
+          pip3 install --user Cython==0.29.33
 
       - name: Build with Buildozer
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          # Este comando agora terá as ferramentas para realmente trabalhar
-          buildozer android debug
+          # O Buildozer vai baixar as dependências do Android automaticamente
+          # O 'yes |' aceita todas as licenças do Google sozinho
+          yes | buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: meu-app-financas
+          name: package
           path: bin/*.apk
