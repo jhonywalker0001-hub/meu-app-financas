@@ -1,4 +1,4 @@
-name: Build APK Final
+name: Build APK Real
 on:
   push:
     branches: [ main, principal ]
@@ -6,26 +6,33 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04 # Versão mais estável para o Buildozer
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Buildozer
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Dependencies
         run: |
-          pip3 install --user buildozer
-          pip3 install --user Cython==0.29.33
+          sudo apt update
+          sudo apt install -y python3-pip build-essential git python3 python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev
+          sudo apt install -y libsqlite3-dev sqlite3 bzip2 libbz2-dev libc6-dev libgdbm-dev libncursesw5-dev libreadline-gplv2-dev libssl-dev tk-dev wget curl lzma liblzma-dev
+          pip3 install --user --upgrade buildozer Cython
 
       - name: Build with Buildozer
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          # O comando abaixo instala as dependências do Android automaticamente
-          buildozer android debug || true 
-          # O "|| true" acima impede que ele morra se um aviso bobo aparecer
-          
+          # Este comando agora terá as ferramentas para realmente trabalhar
+          buildozer android debug
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: package
+          name: meu-app-financas
           path: bin/*.apk
