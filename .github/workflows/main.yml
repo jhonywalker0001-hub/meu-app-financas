@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write # Alterado para permitir a criação do arquivo
 
 jobs:
   build:
@@ -25,41 +25,20 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential \
-            git \
-            python3-pip \
-            python3-setuptools \
-            python3-dev \
-            ffmpeg \
-            libsdl2-dev \
-            libsdl2-image-dev \
-            libsdl2-mixer-dev \
-            libsdl2-ttf-dev \
-            libportmidi-dev \
-            libswscale-dev \
-            libavformat-dev \
-            libavcodec-dev \
-            zlib1g-dev \
-            libgstreamer1.0 \
-            gstreamer1.0-plugins-base \
-            gstreamer1.0-plugins-good
+            build-essential git python3-pip python3-setuptools python3-dev \
+            ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+            libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev \
+            zlib1g-dev libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good
 
       - name: Instalar Buildozer e Cython
         run: |
           pip install --upgrade pip
           pip install Cython==0.29.33 buildozer
 
-      - name: Cache do Buildozer (acelera MUITO)
-        uses: actions/cache@v4
-        with:
-          path: |
-            .buildozer
-            ~/.buildozer
-          key: buildozer-${{ runner.os }}
-
       - name: Build APK
         run: |
-          buildozer android debug
+          # O 'yes |' é vital para o GitHub não travar pedindo autorização
+          yes | buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
