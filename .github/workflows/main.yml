@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configurar Python e Java
+      - name: Setup Python e Java
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
@@ -16,26 +16,26 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Limpeza Extrema e Instalação
+      - name: Limpeza Total de Variaveis e NDK
         run: |
-          # Deleta o NDK r27 que o GitHub pré-instala e causa o erro
+          # Remove fisicamente as pastas que causam o conflito
           sudo rm -rf /usr/local/lib/android/sdk/ndk
+          sudo rm -rf /usr/local/lib/android/sdk/ndk-bundle
           
           sudo apt-get update
           sudo apt-get install -y build-essential zip unzip libffi-dev libssl-dev autoconf libtool pkg-config
           pip install Cython==0.29.33 buildozer
 
-      - name: Gerar APK
+      - name: Gerar APK (Forçando Limpeza)
         run: |
-          # Limpa variáveis de ambiente para o Buildozer baixar o NDK correto
+          # Remove as variáveis de ambiente que o log mostrou estarem ativas
+          unset ANDROID_NDK_ROOT
+          unset ANDROID_NDK
+          unset ANDROID_NDK_LATEST_HOME
           export ANDROID_NDK_HOME=""
           export ANDROID_SDK_ROOT=""
+          
+          # Roda o buildozer com log nivel 2 para capturar qualquer detalhe extra
           buildozer -v android debug
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
-
-      - name: Upload do APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Financas2026-APK
-          path: bin/*.apk
