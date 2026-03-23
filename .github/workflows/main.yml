@@ -1,4 +1,4 @@
-name: Build APK Financas 2026 - Tentativa 96
+name: Build APK Financas 2026 - Tentativa 97
 on: [push, workflow_dispatch]
 
 jobs:
@@ -21,19 +21,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Configuração do Sistema e Java
+      - name: Limpeza e Preparação
         run: |
-          # Remove NDKs que causam conflito de versão
           sudo rm -rf /usr/local/lib/android/sdk/ndk
           sudo rm -rf /usr/local/lib/android/sdk/ndk-bundle
-          
-          # Garante que o Java 17 seja a escolha padrão do sistema
-          sudo update-alternatives --set java /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.18-8/x64/bin/java || true
-          
-          # Limpeza de builds anteriores
           rm -rf .buildozer
           rm -rf bin
-          
           sudo apt-get update
           sudo apt-get install -y build-essential libffi-dev libssl-dev autoconf libtool pkg-config cmake
 
@@ -44,14 +37,15 @@ jobs:
 
       - name: Gerar APK
         run: |
-          # Define o JAVA_HOME para o caminho real do GitHub Actions
+          # Swap de 8GB com verificação de arquivo existente para evitar erro "busy"
+          if [ ! -f /swapfile ]; then
+            sudo fallocate -l 8G /swapfile
+            sudo chmod 600 /swapfile
+            sudo mkswap /swapfile
+            sudo swapon /swapfile
+          fi
+          
           export JAVA_HOME=$JAVA_HOME_17_X64
           export PATH=$JAVA_HOME/bin:$PATH
-          
-          # Swap de 8GB para compilar o Pandas sem estourar a RAM
-          sudo fallocate -l 8G /swapfile || true
-          sudo chmod 600 /swapfile || true
-          sudo mkswap /swapfile 2>/dev/null || true
-          sudo swapon /swapfile 2>/dev/null || true
           
           buildozer -v android debug
