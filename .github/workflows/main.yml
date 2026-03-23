@@ -13,9 +13,9 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Limpeza de Ambiente e Instalação
+      - name: Limpeza e Instalação de Dependências
         run: |
-          # Remove NDKs pré-instalados que causam o erro nos logs
+          # Remove o NDK do GitHub que causa o conflito de 'exit code 1'
           sudo rm -rf /usr/local/lib/android/sdk/ndk
           sudo apt-get update
           sudo apt-get install -y build-essential openjdk-17-jdk-headless zip unzip libffi-dev libssl-dev autoconf libtool pkg-config
@@ -23,7 +23,7 @@ jobs:
 
       - name: Criar APK
         run: |
-          # Garante que o Buildozer ignore qualquer caminho antigo
+          # Força o Buildozer a ignorar caminhos antigos nos logs
           export ANDROID_NDK_HOME=""
           export ANDROID_HOME=""
           buildozer -v android debug
