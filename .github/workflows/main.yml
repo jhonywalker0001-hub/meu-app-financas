@@ -1,13 +1,13 @@
-name: Build APK Financas 2026 - COM Pandas
+name: Build APK Financas 2026 - Final
 on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 120  # Aumentado para builds pesados
-    
+    timeout-minutes: 120
+
     steps:
-      - name: Checkout
+      - name: Checkout Código
         uses: actions/checkout@v4
 
       - name: Setup Python
@@ -21,88 +21,39 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Cache Buildozer
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.buildozer
-            ~/.buildozer_global
-          key: ${{ runner.os }}-buildozer-pandas-${{ hashFiles('**/buildozer.spec') }}
-          restore-keys: |
-            ${{ runner.os }}-buildozer-pandas-
-
-      - name: Install system dependencies
+      - name: Limpeza e Dependências do Sistema
         run: |
+          # Remove o NDK 27 que causa o conflito de 1 minuto
+          sudo rm -rf /usr/local/lib/android/sdk/ndk
           sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            libffi-dev \
-            libssl-dev \
-            autoconf \
-            libtool \
-            pkg-config \
-            cmake \
-            libjpeg-dev \
-            libpng-dev \
-            zlib1g-dev \
-            libltdl-dev \
-            libsqlite3-dev \
-            freetype-dev \
-            libharfbuzz-dev \
-            libfribidi-dev
+          sudo apt-get install -y build-essential libffi-dev libssl-dev autoconf libtool pkg-config cmake
 
-      - name: Install Buildozer
+      - name: Instala Buildozer e Cython
         run: |
-          pip install --upgrade Cython
+          pip install --upgrade Cython==0.29.33
           pip install buildozer
 
-      - name: Create recipes directory
+      - name: Build APK (Com Memória Extra para Pandas)
         run: |
-          mkdir -p recipes
-
-      - name: Build APK (com pandas - com swap aumentado)
-        run: |
-          # LIMPA TODAS variáveis de ambiente conflitantes do sistema
+          # Isola o ambiente de variáveis conflitantes
           unset ANDROID_NDK_ROOT
           unset ANDROID_NDK_HOME
           unset ANDROID_NDK
-          unset ANDROID_SDK_ROOT
-          unset ANDROID_HOME
+          export ANDROID_SDK_ROOT=""
           
-          # Configura ambiente limpo
-          export BUILDOZER_WARN_ON_ROOT=0
-          export APP_ANDROID_ACCEPT_SDK_LICENSE=1
-          
-          # Aumenta swap para compensar RAM limitada (pandas consome muito)
-          echo "Aumentando swap..."
+          # Aumenta a RAM virtual (Swap) para 8GB para compilar o Pandas
           sudo fallocate -l 8G /swapfile || true
           sudo chmod 600 /swapfile || true
           sudo mkswap /swapfile 2>/dev/null || true
           sudo swapon /swapfile 2>/dev/null || true
-          free -h
           
-          # Build com timeout extendido
-          echo "Iniciando build..."
-          buildozer -v android debug 2>&1
+          # Inicia o build com log nível 2
+          buildozer -v android debug
         env:
-          JAVA_HOME: ${{ env.JAVA_HOME }}
-          ANDROID_NDK_ROOT: ""
-          ANDROID_NDK_HOME: ""
-          ANDROID_NDK: ""
-          ANDROID_SDK_ROOT: ""
-          ANDROID_HOME: ""
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
-      - name: Upload APK
+      - name: Upload do APK Gerado
         uses: actions/upload-artifact@v4
         with:
-          name: apk-com-pandas
+          name: Financas-2026-APK
           path: bin/*.apk
-          if-no-files-found: error
-
-      - name: Upload logs em caso de falha
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-logs-falha
-          path: .buildozer/android/platform/build-*/build.log
-          if-no-files-found: ignore
