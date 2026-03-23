@@ -6,7 +6,6 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,ttf,db,json,xlsx,xls,pdf,csv
 version = 1.0.0
 
-# Requisitos para as bibliotecas de dados e gráficos
 requirements = python3,kivy==2.2.1,kivymd,numpy,pandas,pytz,openpyxl,fpdf2
 
 android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE,MANAGE_EXTERNAL_STORAGE
