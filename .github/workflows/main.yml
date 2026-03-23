@@ -10,25 +10,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Limpeza Drástica do Ambiente
+      - name: Instalar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Dependencias e Limpeza
         run: |
-          # Apaga o NDK 27 que está travando o seu build
-          sudo rm -rf /usr/local/lib/android/sdk/ndk
           sudo apt-get update
-          sudo apt-get install -y build-essential openjdk-17-jdk-headless zip unzip libffi-dev libssl-dev autoconf libtool pkg-config
+          sudo apt-get install -y build-essential zip unzip libffi-dev libssl-dev autoconf libtool pkg-config
+          # Remove o NDK que causa o "exit code 1"
+          sudo rm -rf /usr/local/lib/android/sdk/ndk
           pip install Cython==0.29.33 buildozer
 
-      - name: Criar APK
+      - name: Build com Buildozer
         run: |
-          # Força o Buildozer a não ver as variáveis antigas
-          export ANDROID_NDK_HOME=""
+          # Força o Buildozer a ignorar os caminhos padrão do GitHub
           export ANDROID_SDK_ROOT=""
+          export ANDROID_NDK_ROOT=""
           buildozer -v android debug
-        env:
-          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-financas-final
-          path: bin/*.apk
