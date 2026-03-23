@@ -20,7 +20,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Cache Buildozer dependencies
+      - name: Cache Buildozer
         uses: actions/cache@v4
         with:
           path: |
@@ -35,16 +35,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             build-essential \
-            zip \
-            unzip \
             libffi-dev \
             libssl-dev \
             autoconf \
             libtool \
             pkg-config \
-            libltdl-dev \
-            libffi-dev \
-            libsqlite3-dev \
+            cmake \
             libjpeg-dev \
             libpng-dev \
             zlib1g-dev
@@ -56,14 +52,25 @@ jobs:
 
       - name: Build APK
         run: |
-          # Configura variáveis necessárias
-          export JAVA_HOME=${{ env.JAVA_HOME }}
+          # LIMPA variáveis de ambiente conflitantes do sistema
+          unset ANDROID_NDK_ROOT
+          unset ANDROID_NDK_HOME
+          unset ANDROID_NDK
+          unset ANDROID_SDK_ROOT
+          unset ANDROID_HOME
           
-          # Executa buildozer com timeout aumentado
-          buildozer -v android debug 2>&1
+          # Força Buildozer a usar seus próprios downloads
+          export BUILDOZER_WARN_ON_ROOT=0
+          export APP_ANDROID_ACCEPT_SDK_LICENSE=1
+          
+          # Build com timeout extendido (pandas é pesado)
+          buildozer -v android debug 2>&1 | tee build.log
         env:
-          BUILDOZER_WARN_ON_ROOT: 0
-          APP_ANDROID_ACCEPT_SDK_LICENSE: 1
+          JAVA_HOME: ${{ env.JAVA_HOME }}
+          # Desativa verificações de NDK do sistema
+          ANDROID_NDK_ROOT: ""
+          ANDROID_NDK_HOME: ""
+          ANDROID_NDK: ""
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
