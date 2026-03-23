@@ -1,5 +1,4 @@
 [app]
-# (section) Title of your application
 title = Financas2026
 package.name = financasapp
 package.domain = org.jhony
@@ -7,13 +6,13 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json,db,xlsx
 version = 1.0.0
 
-# REQUISITOS CORRIGIDOS: Adicionados kivymd, matplotlib, fpdf2 e numpy
+# REQUISITOS COMPLETOS (Evita o erro de biblioteca faltando)
 requirements = python3,kivy==2.2.1,kivymd,sqlite3,pandas,openpyxl,matplotlib,fpdf2,numpy
 
 orientation = portrait
 fullscreen = 0
 
-# PERMISSÕES: Adicionada a permissão para gerenciar arquivos no Android 11+
+# PERMISSÕES PARA ANDROID MODERNO
 android.permissions = INTERNET, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE
 
 android.api = 33
