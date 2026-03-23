@@ -13,65 +13,42 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configurar Java
+      - name: Configurar Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Configurar Python
+      - name: Configurar Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'   # 🔥 melhor compatibilidade com buildozer
+          python-version: '3.10'
 
-      - name: Instalar dependências do sistema
+      - name: Limpeza de NDK e Instalação de Dependências
         run: |
+          # REMOÇÃO CRÍTICA: Apaga o NDK 27 que causa o erro de conflito
+          sudo rm -rf /usr/local/lib/android/sdk/ndk
+          
+          # Instalação focada no que o Buildozer realmente precisa
           sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            git \
-            zip unzip \
-            openjdk-17-jdk \
-            python3-dev \
-            ffmpeg \
-            libsdl2-dev \
-            libsdl2-image-dev \
-            libsdl2-mixer-dev \
-            libsdl2-ttf-dev \
-            libportmidi-dev \
-            libswscale-dev \
-            libavformat-dev \
-            libavcodec-dev \
-            zlib1g-dev \
-            libgstreamer1.0 \
-            gstreamer1.0-plugins-base \
-            gstreamer1.0-plugins-good \
-            autoconf \
-            libtool \
-            pkg-config \
-            libffi-dev \
-            libssl-dev
-
-      - name: Instalar Buildozer
-        run: |
+          sudo apt-get install -y build-essential git zip unzip openjdk-17-jdk python3-dev \
+          autoconf libtool pkg-config libffi-dev libssl-dev
+          
           python -m pip install --upgrade pip
           pip install Cython==0.29.33 buildozer
 
-      - name: Cache Buildozer (acelera builds futuros)
-        uses: actions/cache@v4
-        with:
-          path: |
-            .buildozer
-            ~/.buildozer
-          key: buildozer-${{ runner.os }}
-
       - name: Gerar APK
         run: |
-          buildozer android debug
+          # Limpa variáveis de ambiente que forçam o NDK errado
+          export ANDROID_NDK_HOME=""
+          export ANDROID_SDK_ROOT=""
+          # O comando -v mostra tudo que está acontecendo (essencial para debugar)
+          buildozer -v android debug
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
       - name: Upload do APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: Financas2026-APK
