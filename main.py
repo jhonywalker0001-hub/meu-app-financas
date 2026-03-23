@@ -1,5 +1,6 @@
+import os
+from kivy.utils import platform
 from kivymd.app import MDApp
-from kivy.uix.screenmanager import Screen
 from kivymd.uix.screen import MDScreen
 from kivy.clock import Clock
 from kivymd.uix.bottomnavigation import MDBottomNavigation, MDBottomNavigationItem
@@ -14,9 +15,17 @@ from metas import MetasPage
 
 class AppFinancas(MDApp):
     def build(self):
-        # Garante as tabelas no Android
-        criar_tabela()
-        criar_tabela_metas()
+        # 1. Ajuste de Permissões para Android 11, 12 e 13
+        if platform == "android":
+            from android.permissions import request_permissions, Permission
+            request_permissions([
+                Permission.READ_EXTERNAL_STORAGE,
+                Permission.WRITE_EXTERNAL_STORAGE,
+                Permission.MANAGE_EXTERNAL_STORAGE
+            ])
+
+        # 2. Garante as tabelas no Android usando caminho persistente
+        self.configurar_banco()
         
         self.theme_cls.theme_style = "Dark"
         self.theme_cls.primary_palette = "Teal"
@@ -47,6 +56,18 @@ class AppFinancas(MDApp):
         
         root.add_widget(self.nav)
         return root
+
+    def configurar_banco(self):
+        """Define o local correto do banco de dados no Android"""
+        if platform == 'android':
+            from android.storage import app_storage_path
+            path = app_storage_path()
+            # Se você usa uma variável global no 'database.py' para a conexão,
+            # certifique-se de que ela aponte para este 'path'
+            os.chdir(path) 
+            
+        criar_tabela()
+        criar_tabela_metas()
 
     def finalizar_cadastro(self, *args):
         # Atualiza os dados nas outras abas
