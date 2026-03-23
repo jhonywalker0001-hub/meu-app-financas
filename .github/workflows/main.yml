@@ -15,24 +15,26 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Limpeza Extrema e Instalação
+      - name: Instalar Dependências e Limpar NDK
         run: |
-          # Deleta as versões do NDK que o GitHub instala e que causam erro
+          # REMOÇÃO FÍSICA: Apaga o NDK padrão do GitHub que causa o erro
           sudo rm -rf /usr/local/lib/android/sdk/ndk
+          
           sudo apt-get update
           sudo apt-get install -y build-essential openjdk-17-jdk-headless zip unzip libffi-dev libssl-dev autoconf libtool pkg-config
           pip install Cython==0.29.33 buildozer
 
       - name: Criar APK
         run: |
-          # Limpa as variáveis para o Buildozer não se perder
+          # Força o Buildozer a ignorar qualquer configuração automática do Runner
           export ANDROID_NDK_HOME=""
           export ANDROID_SDK_ROOT=""
           buildozer -v android debug
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
-      - name: Upload APK
+      - name: Subir o APK Final
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: app-financas-final
