@@ -1,8 +1,5 @@
 name: Build APK Financas 2026
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 
 jobs:
   build:
@@ -10,28 +7,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Instalar Java 17
+      - name: Configurar Java e Python
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Configurar Python
-        uses: actions/setup-python@v5
+      
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
-      - name: Dependencias e Limpeza
+      - name: Limpeza e Instalação de Dependências
         run: |
+          # REMOÇÃO DO NDK PROBLEMÁTICO
+          sudo rm -rf /usr/local/lib/android/sdk/ndk
           sudo apt-get update
           sudo apt-get install -y build-essential zip unzip libffi-dev libssl-dev autoconf libtool pkg-config
-          # Remove o NDK que causa o "exit code 1"
-          sudo rm -rf /usr/local/lib/android/sdk/ndk
           pip install Cython==0.29.33 buildozer
 
-      - name: Build com Buildozer
+      - name: Gerar APK
         run: |
-          # Força o Buildozer a ignorar os caminhos padrão do GitHub
+          # Reseta variáveis que o GitHub injeta por padrão
+          export ANDROID_NDK_HOME=""
           export ANDROID_SDK_ROOT=""
-          export ANDROID_NDK_ROOT=""
           buildozer -v android debug
+        env:
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+
+      - name: Upload do Artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: Financas2026-APK
+          path: bin/*.apk
