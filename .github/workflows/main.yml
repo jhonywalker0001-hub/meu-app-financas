@@ -23,8 +23,9 @@ jobs:
           pip install --upgrade pip
           pip install Cython==0.29.33 buildozer
 
-      - name: Criar o APK (Modo Persistente)
+      - name: Limpar e Criar APK
         run: |
+          buildozer android clean
           buildozer android debug || buildozer android debug
 
       - name: Subir o APK Final
