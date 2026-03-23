@@ -1,40 +1,77 @@
 name: Build APK Financas 2026
-on: [push, workflow_dispatch]
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Configurar Java e Python
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-      
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
 
-      - name: Limpeza e Instalação de Dependências
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'   # 🔥 melhor compatibilidade com buildozer
+
+      - name: Instalar dependências do sistema
         run: |
-          # REMOÇÃO DO NDK PROBLEMÁTICO
-          sudo rm -rf /usr/local/lib/android/sdk/ndk
           sudo apt-get update
-          sudo apt-get install -y build-essential zip unzip libffi-dev libssl-dev autoconf libtool pkg-config
+          sudo apt-get install -y \
+            build-essential \
+            git \
+            zip unzip \
+            openjdk-17-jdk \
+            python3-dev \
+            ffmpeg \
+            libsdl2-dev \
+            libsdl2-image-dev \
+            libsdl2-mixer-dev \
+            libsdl2-ttf-dev \
+            libportmidi-dev \
+            libswscale-dev \
+            libavformat-dev \
+            libavcodec-dev \
+            zlib1g-dev \
+            libgstreamer1.0 \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            autoconf \
+            libtool \
+            pkg-config \
+            libffi-dev \
+            libssl-dev
+
+      - name: Instalar Buildozer
+        run: |
+          python -m pip install --upgrade pip
           pip install Cython==0.29.33 buildozer
+
+      - name: Cache Buildozer (acelera builds futuros)
+        uses: actions/cache@v4
+        with:
+          path: |
+            .buildozer
+            ~/.buildozer
+          key: buildozer-${{ runner.os }}
 
       - name: Gerar APK
         run: |
-          # Reseta variáveis que o GitHub injeta por padrão
-          export ANDROID_NDK_HOME=""
-          export ANDROID_SDK_ROOT=""
-          buildozer -v android debug
+          buildozer android debug
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
-      - name: Upload do Artefato
+      - name: Upload do APK
         uses: actions/upload-artifact@v4
         with:
           name: Financas2026-APK
