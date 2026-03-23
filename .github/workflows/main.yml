@@ -6,31 +6,37 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      - name: Configurar Java e Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      - name: Limpeza e Instalação de Dependências
+      - name: Instalar Dependencias do Sistema
         run: |
-          # Remove o NDK do GitHub que causa o conflito de 'exit code 1'
-          sudo rm -rf /usr/local/lib/android/sdk/ndk
           sudo apt-get update
-          sudo apt-get install -y build-essential openjdk-17-jdk-headless zip unzip libffi-dev libssl-dev autoconf libtool pkg-config
+          sudo apt-get install -y build-essential openjdk-17-jdk-headless zip unzip libffi-dev libssl-dev autoconf libtool pkg-config libncurses5 libncursesw5
+          pip install --upgrade pip
           pip install Cython==0.29.33 buildozer
 
-      - name: Criar APK
+      - name: Criar o APK
         run: |
-          # Força o Buildozer a ignorar caminhos antigos nos logs
+          # Mata qualquer rastro de variáveis de ambiente do NDK do GitHub
+          unset ANDROID_SDK_ROOT
+          unset ANDROID_NDK_HOME
+          export ANDROID_SDK_ROOT=""
           export ANDROID_NDK_HOME=""
-          export ANDROID_HOME=""
+          
+          # Executa o buildozer com log detalhado
           buildozer -v android debug
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
-      - name: Upload APK
+      - name: Subir o APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: app-financas-final
