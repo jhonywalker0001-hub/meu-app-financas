@@ -25,13 +25,12 @@ jobs:
 
       - name: Criar o APK
         run: |
-          # Remove variáveis de ambiente que confundem o Buildozer
+          # Remove caminhos do NDK padrão do GitHub que causam conflito
           unset ANDROID_NDK_HOME
           unset ANDROID_HOME
-          # Roda o build com log detalhado para não travar por inatividade
+          # Roda o build com log detalhado
           buildozer -v android debug
         env:
-          # Força o uso do Java 17 que instalamos
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
       - name: Subir o APK Final
