@@ -1,54 +1,40 @@
 name: Build APK Financas 2026
-
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Configurar Java 17
-        uses: actions/setup-java@v4
+      - name: Configurar Python e Java
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Configurar Python 3.10
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Limpeza de NDK e Instalação de Dependências
+      - name: Limpeza Extrema e Instalação
         run: |
-          # REMOÇÃO CRÍTICA: Apaga o NDK 27 que causa o erro de conflito
+          # Deleta o NDK r27 que o GitHub pré-instala e causa o erro
           sudo rm -rf /usr/local/lib/android/sdk/ndk
           
-          # Instalação focada no que o Buildozer realmente precisa
           sudo apt-get update
-          sudo apt-get install -y build-essential git zip unzip openjdk-17-jdk python3-dev \
-          autoconf libtool pkg-config libffi-dev libssl-dev
-          
-          python -m pip install --upgrade pip
+          sudo apt-get install -y build-essential zip unzip libffi-dev libssl-dev autoconf libtool pkg-config
           pip install Cython==0.29.33 buildozer
 
       - name: Gerar APK
         run: |
-          # Limpa variáveis de ambiente que forçam o NDK errado
+          # Limpa variáveis de ambiente para o Buildozer baixar o NDK correto
           export ANDROID_NDK_HOME=""
           export ANDROID_SDK_ROOT=""
-          # O comando -v mostra tudo que está acontecendo (essencial para debugar)
           buildozer -v android debug
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
       - name: Upload do APK
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: Financas2026-APK
