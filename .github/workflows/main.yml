@@ -1,4 +1,4 @@
-name: Build APK Financas 2026 - Tentativa 101
+name: Build APK Financas 2026 - Tentativa 102
 
 on:
   push:
@@ -23,11 +23,11 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Limpeza de NDKs e Cache
+      - name: Limpeza de Ambiente e Swap
         run: |
-          sudo rm -rf /usr/local/lib/android/sdk/ndk/*
           sudo swapoff -a || true
           sudo rm -f /swapfile
+          sudo rm -rf /usr/local/lib/android/sdk/ndk/*
 
       - name: Cria arquivo de SWAP de 12GB
         run: |
@@ -37,7 +37,6 @@ jobs:
           sudo swapon /swapfile
 
       - name: Instala dependências do sistema
-        # Adicionado libunwind-dev para resolver o erro 'broken packages'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential git python3-dev ffmpeg libsdl2-dev \
