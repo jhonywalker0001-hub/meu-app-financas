@@ -1,4 +1,4 @@
-name: Build APK Financas 2026 - Tentativa 94
+name: Build APK Financas 2026 - Tentativa 95
 on: [push, workflow_dispatch]
 
 jobs:
@@ -21,16 +21,20 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Purga de Conflitos e Dependências
+      - name: Purga de Conflitos e Correção de JAVA_HOME
         run: |
-          # Remove SDK e NDK pré-instalados que causam erro de exit code 1
+          # Remove NDKs problemáticos do sistema
           sudo rm -rf /usr/local/lib/android/sdk/ndk
           sudo rm -rf /usr/local/lib/android/sdk/ndk-bundle
-          sudo rm -rf /usr/local/lib/android/sdk/tools
           
-          # Limpeza de pastas locais para build virgem
+          # Limpa pastas locais
           rm -rf .buildozer
           rm -rf bin
+          
+          # CORREÇÃO CRÍTICA DO JAVA: Cria um link simbólico para o caminho que o Buildozer exige
+          # Isso resolve o erro "invalid directory: /usr/lib/jvm/java-17-openjdk-amd64"
+          sudo mkdir -p /usr/lib/jvm
+          sudo ln -s $JAVA_HOME /usr/lib/jvm/java-17-openjdk-amd64
           
           sudo apt-get update
           sudo apt-get install -y build-essential libffi-dev libssl-dev autoconf libtool pkg-config cmake
@@ -40,15 +44,16 @@ jobs:
           pip install --upgrade Cython==0.29.33
           pip install buildozer
 
-      - name: Gerar APK (Forçando Ambiente Limpo)
+      - name: Gerar APK
         run: |
-          # Remove variáveis que apontam para as ferramentas que acabamos de apagar
+          # Isola o ambiente e define o JAVA_HOME explicitamente para o processo
+          export JAVA_HOME=$(readlink -f $(which java) | sed "s:/bin/java::")
           unset ANDROID_NDK_ROOT
           unset ANDROID_SDK_ROOT
           unset ANDROID_HOME
           export ANDROID_NDK_HOME=""
           
-          # Swap de 8GB para compilação do Pandas
+          # Swap de 8GB para o Pandas
           sudo fallocate -l 8G /swapfile || true
           sudo chmod 600 /swapfile || true
           sudo mkswap /swapfile 2>/dev/null || true
@@ -56,6 +61,7 @@ jobs:
           
           buildozer -v android debug
         env:
+          # Força o caminho que o log anterior reclamou que estava faltando
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
       - name: Upload APK
