@@ -1,77 +1,70 @@
 import sqlite3
-import pandas as pd
-from datetime import datetime
 import os
 from kivy.utils import platform
 
-# Usaremos fpdf2 que é mais atualizada para Android
-try:
-    from fpdf import FPDF
-except ImportError:
-    FPDF = None
-
-def conectar():
-    nome_db = "financas.db"
+def obter_caminho_banco():
+    """
+    Define o caminho correto do banco de dados dependendo da plataforma.
+    No Android, usa a pasta de armazenamento interna do App.
+    """
+    nome_banco = "financas.db"
+    
     if platform == 'android':
         from android.storage import app_storage_path
-        # No Android, o banco fica na pasta privada do app
-        caminho = os.path.join(app_storage_path(), nome_db)
+        caminho_pasta = app_storage_path()
+        # Garante que estamos na pasta correta antes de criar o arquivo
+        caminho_completo = os.path.join(caminho_pasta, nome_banco)
     else:
-        caminho = nome_db
-    return sqlite3.connect(caminho, check_same_thread=False)
+        # No PC (Windows/Linux), salva na pasta atual do projeto
+        caminho_completo = nome_banco
+        
+    return caminho_completo
+
+def conectar():
+    """Retorna uma conexão com o banco de dados no caminho correto."""
+    caminho = obter_caminho_banco()
+    return sqlite3.connect(caminho)
 
 def criar_tabela():
+    """Cria a tabela de transações se ela não existir."""
     conn = conectar()
     cursor = conn.cursor()
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS transacoes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        tipo TEXT, valor REAL, descricao TEXT, categoria TEXT, data TEXT
-    )""")
-    # Tenta adicionar a coluna categoria se ela não existir (migração)
-    try:
-        cursor.execute("ALTER TABLE transacoes ADD COLUMN categoria TEXT")
-    except:
-        pass
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS transacoes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            valor REAL NOT NULL,
+            descricao TEXT NOT NULL,
+            categoria TEXT,
+            tipo TEXT NOT NULL,
+            data TEXT NOT NULL
+        )
+    ''')
     conn.commit()
     conn.close()
 
 def criar_tabela_metas():
+    """Cria a tabela de metas se ela não existir."""
     conn = conectar()
     cursor = conn.cursor()
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS metas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        categoria TEXT UNIQUE, valor_limite REAL
-    )""")
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS metas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            valor_objetivo REAL NOT NULL,
+            valor_poupado REAL DEFAULT 0,
+            data_limite TEXT
+        )
+    ''')
     conn.commit()
     conn.close()
 
-def obter_caminho_exportacao(nome_arquivo):
-    if platform == 'android':
-        # Tenta salvar na pasta de documentos do app para evitar erro de permissão do Android 13
-        from android.storage import app_storage_path
-        caminho_base = app_storage_path()
-        return os.path.join(caminho_base, nome_arquivo)
-    return nome_arquivo
-
-def exportar_para_excel(nome_arquivo, mes_filtro=None):
-    caminho = obter_caminho_exportacao(nome_arquivo)
-    conn = conectar()
-    query = "SELECT data, categoria, descricao, tipo, valor FROM transacoes"
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    df.to_excel(caminho, index=False)
-    return caminho # Retorna o caminho para avisar o usuário
-
-# ... (restante das funções de cálculo permanecem iguais, apenas sem espaços invisíveis)
-
-def calcular_saldo():
+# Exemplo de função para salvar (insira conforme sua lógica de campos)
+def salvar_transacao(valor, descricao, categoria, tipo, data):
     conn = conectar()
     cursor = conn.cursor()
-    cursor.execute("SELECT SUM(CASE WHEN tipo='receita' THEN valor ELSE 0 END), SUM(CASE WHEN tipo='despesa' THEN valor ELSE 0 END) FROM transacoes")
-    res = cursor.fetchone()
+    cursor.execute('''
+        INSERT INTO transacoes (valor, descricao, categoria, tipo, data)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (valor, descricao, categoria, tipo, data))
+    conn.commit()
     conn.close()
-    receitas = res[0] or 0
-    despesas = res[1] or 0
-    return receitas - despesas
