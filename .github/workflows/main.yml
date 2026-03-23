@@ -16,24 +16,16 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Instalar Dependências do Sistema
+      - name: Instalar Dependências
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential openjdk-17-jdk-headless zip unzip libffi-dev libssl-dev autoconf libtool pkg-config libncurses5 libncursesw5
-          pip install --upgrade pip
+          sudo apt-get install -y build-essential openjdk-17-jdk-headless zip unzip libffi-dev libssl-dev autoconf libtool pkg-config
           pip install Cython==0.29.33 buildozer
 
       - name: Criar o APK
         run: |
-          # Limpeza profunda de variáveis que causam conflito
           unset ANDROID_NDK_HOME
-          unset ANDROID_HOME
-          # Remove pastas de builds anteriores que possam estar corrompidas
-          rm -rf .buildozer
-          # Executa o build forçando o download das ferramentas corretas
           buildozer -v android debug
-        env:
-          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
       - name: Subir o APK Final
         if: success()
