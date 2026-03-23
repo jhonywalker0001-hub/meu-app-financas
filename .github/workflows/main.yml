@@ -19,15 +19,21 @@ jobs:
       - name: Instalar Dependências do Sistema
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential openjdk-17-jdk-headless zip unzip
+          sudo apt-get install -y build-essential git python3-pip python3-dev \
+          libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+          libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
+          openjdk-17-jdk-headless zip unzip
+
+      - name: Instalar Buildozer e Cython
+        run: |
           pip install --upgrade pip
           pip install Cython==0.29.33 buildozer
 
-      - name: Criar o APK
+      - name: Criar o APK (Com Re-tentativa em caso de erro)
         run: |
-          yes | buildozer android debug
+          buildozer android debug || buildozer android debug
 
-      - name: Subir o APK Gerado
+      - name: Subir o APK Final
         if: success()
         uses: actions/upload-artifact@v4
         with:
