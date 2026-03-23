@@ -8,27 +8,24 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v4
-
-      - name: Configurar Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      - name: Instalar Dependências
+      - name: Instalar Dependencias
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential openjdk-17-jdk-headless zip unzip libffi-dev libssl-dev autoconf libtool pkg-config
           pip install Cython==0.29.33 buildozer
 
-      - name: Criar o APK
+      - name: Criar APK
         run: |
           unset ANDROID_NDK_HOME
+          unset ANDROID_HOME
           buildozer -v android debug
 
-      - name: Subir o APK Final
-        if: success()
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: app-financas-final
