@@ -19,13 +19,13 @@ jobs:
       - name: Instalar Dependências do Sistema
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential openjdk-17-jdk-headless zip unzip libffi-dev libssl-dev
+          sudo apt-get install -y build-essential openjdk-17-jdk-headless zip unzip libffi-dev libssl-dev autoconf libtool pkg-config
           pip install --upgrade pip
           pip install Cython==0.29.33 buildozer
 
-      - name: Criar o APK
+      - name: Criar o APK (Modo Persistente)
         run: |
-          buildozer android debug
+          buildozer android debug || buildozer android debug
 
       - name: Subir o APK Final
         if: success()
