@@ -1,4 +1,4 @@
-name: Build APK Financas 2026 - Final
+name: Build APK Financas 2026 - Tentativa 93
 on: [push, workflow_dispatch]
 
 jobs:
@@ -21,38 +21,40 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Limpeza e Dependências do Sistema
+      - name: Limpeza Profunda do Ambiente
         run: |
-          # Remove o NDK 27 que causa o conflito de 1 minuto
+          # Remove caches corrompidos de tentativas anteriores
+          rm -rf .buildozer
+          rm -rf bin
+          # Remove o NDK do sistema que causa conflito
           sudo rm -rf /usr/local/lib/android/sdk/ndk
           sudo apt-get update
           sudo apt-get install -y build-essential libffi-dev libssl-dev autoconf libtool pkg-config cmake
 
-      - name: Instala Buildozer e Cython
+      - name: Instala Ferramentas
         run: |
           pip install --upgrade Cython==0.29.33
           pip install buildozer
 
-      - name: Build APK (Com Memória Extra para Pandas)
+      - name: Gerar APK
         run: |
-          # Isola o ambiente de variáveis conflitantes
+          # Zera as variáveis para o Buildozer configurar o SDK do zero corretamente
           unset ANDROID_NDK_ROOT
-          unset ANDROID_NDK_HOME
-          unset ANDROID_NDK
-          export ANDROID_SDK_ROOT=""
+          unset ANDROID_SDK_ROOT
+          unset ANDROID_HOME
+          export ANDROID_NDK_HOME=""
           
-          # Aumenta a RAM virtual (Swap) para 8GB para compilar o Pandas
+          # Swap para o Pandas não travar a RAM
           sudo fallocate -l 8G /swapfile || true
           sudo chmod 600 /swapfile || true
           sudo mkswap /swapfile 2>/dev/null || true
           sudo swapon /swapfile 2>/dev/null || true
           
-          # Inicia o build com log nível 2
           buildozer -v android debug
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
-      - name: Upload do APK Gerado
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Financas-2026-APK
