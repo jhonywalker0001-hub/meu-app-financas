@@ -16,26 +16,25 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Limpeza e Instalacao
+      - name: Limpeza de NDK Conflitante
         run: |
+          # Remove fisicamente o NDK 27 que causa o erro 1
+          sudo rm -rf /usr/local/lib/android/sdk/ndk
+          sudo rm -rf /usr/local/lib/android/sdk/ndk-bundle
+          
           sudo apt-get update
           sudo apt-get install -y build-essential zip unzip libffi-dev libssl-dev autoconf libtool pkg-config
           pip install Cython==0.29.33 buildozer
-          # Deleta qualquer vestigio de NDK pre-instalado no sistema
-          sudo rm -rf /usr/local/lib/android/sdk/ndk
-          sudo rm -rf /usr/local/lib/android/sdk/ndk-bundle
 
       - name: Gerar APK
         run: |
-          # FORCA O ISOLAMENTO: Limpa as variaveis que estao causando o erro 1
+          # DELETANDO AS VARIÁVEIS QUE CAUSAM O CONFLITO
+          unset ANDROID_NDK_ROOT
+          unset ANDROID_NDK
+          unset ANDROID_NDK_LATEST_HOME
           export ANDROID_NDK_HOME=""
-          export ANDROID_NDK_ROOT=""
           export ANDROID_SDK_ROOT=""
           
-          # Executa o buildozer com log detalhado para vermos o erro real se falhar
           buildozer -v android debug
         env:
-          # Sobrescreve variaveis do sistema que o GitHub injeta
-          ANDROID_NDK_HOME: ""
-          ANDROID_SDK_ROOT: ""
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
