@@ -1,9 +1,10 @@
-name: Build APK Financas 2026
+name: Build APK Financas 2026 - COM Pandas
 on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-22.04
+    timeout-minutes: 120  # Aumentado para builds pesados
     
     steps:
       - name: Checkout
@@ -26,11 +27,11 @@ jobs:
           path: |
             ~/.buildozer
             ~/.buildozer_global
-          key: ${{ runner.os }}-buildozer-${{ hashFiles('**/buildozer.spec') }}
+          key: ${{ runner.os }}-buildozer-pandas-${{ hashFiles('**/buildozer.spec') }}
           restore-keys: |
-            ${{ runner.os }}-buildozer-
+            ${{ runner.os }}-buildozer-pandas-
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -43,38 +44,65 @@ jobs:
             cmake \
             libjpeg-dev \
             libpng-dev \
-            zlib1g-dev
+            zlib1g-dev \
+            libltdl-dev \
+            libsqlite3-dev \
+            freetype-dev \
+            libharfbuzz-dev \
+            libfribidi-dev
 
       - name: Install Buildozer
         run: |
           pip install --upgrade Cython
           pip install buildozer
 
-      - name: Build APK
+      - name: Create recipes directory
         run: |
-          # LIMPA variáveis de ambiente conflitantes do sistema
+          mkdir -p recipes
+
+      - name: Build APK (com pandas - com swap aumentado)
+        run: |
+          # LIMPA TODAS variáveis de ambiente conflitantes do sistema
           unset ANDROID_NDK_ROOT
           unset ANDROID_NDK_HOME
           unset ANDROID_NDK
           unset ANDROID_SDK_ROOT
           unset ANDROID_HOME
           
-          # Força Buildozer a usar seus próprios downloads
+          # Configura ambiente limpo
           export BUILDOZER_WARN_ON_ROOT=0
           export APP_ANDROID_ACCEPT_SDK_LICENSE=1
           
-          # Build com timeout extendido (pandas é pesado)
-          buildozer -v android debug 2>&1 | tee build.log
+          # Aumenta swap para compensar RAM limitada (pandas consome muito)
+          echo "Aumentando swap..."
+          sudo fallocate -l 8G /swapfile || true
+          sudo chmod 600 /swapfile || true
+          sudo mkswap /swapfile 2>/dev/null || true
+          sudo swapon /swapfile 2>/dev/null || true
+          free -h
+          
+          # Build com timeout extendido
+          echo "Iniciando build..."
+          buildozer -v android debug 2>&1
         env:
           JAVA_HOME: ${{ env.JAVA_HOME }}
-          # Desativa verificações de NDK do sistema
           ANDROID_NDK_ROOT: ""
           ANDROID_NDK_HOME: ""
           ANDROID_NDK: ""
+          ANDROID_SDK_ROOT: ""
+          ANDROID_HOME: ""
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: apk-debug
+          name: apk-com-pandas
           path: bin/*.apk
           if-no-files-found: error
+
+      - name: Upload logs em caso de falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-falha
+          path: .buildozer/android/platform/build-*/build.log
+          if-no-files-found: ignore
