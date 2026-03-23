@@ -16,9 +16,9 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Limpeza de NDK Conflitante
+      - name: Limpeza e Instalacao
         run: |
-          # Remove fisicamente o NDK 27 que causa o erro 1
+          # Deleta qualquer NDK pre-instalado no servidor
           sudo rm -rf /usr/local/lib/android/sdk/ndk
           sudo rm -rf /usr/local/lib/android/sdk/ndk-bundle
           
@@ -28,13 +28,13 @@ jobs:
 
       - name: Gerar APK
         run: |
-          # DELETANDO AS VARIÁVEIS QUE CAUSAM O CONFLITO
+          # Mata as variaveis que causam o erro de 1 minuto
           unset ANDROID_NDK_ROOT
           unset ANDROID_NDK
-          unset ANDROID_NDK_LATEST_HOME
           export ANDROID_NDK_HOME=""
           export ANDROID_SDK_ROOT=""
           
+          # Executa o buildozer
           buildozer -v android debug
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
