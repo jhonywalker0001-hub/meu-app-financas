@@ -1,49 +1,69 @@
-name: Build APK Financas 2026 - Tentativa 98
-on: [push, workflow_dispatch]
+name: Build APK Financas 2026 - Tentativa 110
+
+on:
+  push:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-22.04
+
     steps:
       - name: Checkout Código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Configura Java JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Configura Python 3.10
+        uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Limpeza Profunda
+      - name: Limpeza Profunda de NDKs e Ferramentas Nativa
+        # Isso evita conflitos entre o NDK 27 pré-instalado e o r25b que seu app precisa
         run: |
-          # Remove resquicios de NDK e SDK do runner
-          sudo rm -rf /usr/local/lib/android/sdk/ndk
-          sudo rm -rf /usr/local/lib/android/sdk/ndk-bundle
-          rm -rf .buildozer
-          
+          sudo rm -rf /usr/local/lib/android/sdk/ndk/*
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY/Ruby"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY/Go"
+
+      - name: Cria arquivo de SWAP de 12GB
+        # Essencial para compilar Pandas/Numpy sem estourar a memória RAM do servidor
+        run: |
+          sudo fallocate -l 12G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=12288
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+
+      - name: Instala dependências do sistema (Correção Autopoint)
+        # Adicionado gettext, libtool e autoconf para resolver o erro do seu log
+        run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libffi-dev libssl-dev autoconf libtool pkg-config cmake
+          sudo apt-get install -y \
+            build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev \
+            libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev \
+            libavformat-dev libavcodec-dev zlib1g-dev libgstreamer1.0-dev \
+            gstreamer1.0-plugins-base gstreamer1.0-plugins-good libsqlite3-dev \
+            sqlite3 gettext libtool autoconf automake pkg-config zip unzip
 
       - name: Instala Buildozer e Cython
         run: |
-          pip install --upgrade Cython==0.29.33
-          pip install buildozer
+          pip install --upgrade pip
+          pip install buildozer cython==0.29.33 git+https://github.com/kivy/python-for-android.git
 
-      - name: Gerar APK
+      - name: Gerar APK com Buildozer
+        # Define explicitamente o JAVA_HOME para evitar avisos de versão
         run: |
-          # Criando Swap para o Pandas (Vital para nao dar Crash)
-          sudo fallocate -l 10G /swapfile || true
-          sudo chmod 600 /swapfile || true
-          sudo mkswap /swapfile || true
-          sudo swapon /swapfile || true
-          
           export JAVA_HOME=$JAVA_HOME_17_X64
-          export PATH=$JAVA_HOME/bin:$PATH
-          
-          # Comando com log limpo
-          buildozer -v android debug
+          buildozer android debug
+
+      - name: Upload do APK Gerado
+        uses: actions/upload-artifact@v3
+        with:
+          name: Financas-2026-APK
+          path: bin/*.apk
