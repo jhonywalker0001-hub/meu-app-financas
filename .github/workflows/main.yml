@@ -25,8 +25,7 @@ jobs:
 
       - name: Criar o APK
         run: |
-          # Forçamos o Buildozer a usar a versão correta do NDK que definimos no .spec
-          export ANDROID_NDK_HOME=$HOME/.buildozer/android/platform/android-ndk-r25b
+          # Comando direto para evitar erros de diretório inexistente
           buildozer android debug
 
       - name: Subir o APK Final
