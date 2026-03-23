@@ -23,28 +23,27 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Limpeza de NDKs pré-instalados
-        # Remove o NDK 27 nativo para evitar o erro de linkagem que vimos nos logs
-        run: sudo rm -rf /usr/local/lib/android/sdk/ndk/*
+      - name: Limpeza de NDKs e Espaço
+        run: |
+          sudo rm -rf /usr/local/lib/android/sdk/ndk/*
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
 
       - name: Cria arquivo de SWAP de 12GB
-        # Essencial para a compilação pesada do Pandas e Numpy
         run: |
+          sudo swapoff -a || true
           sudo fallocate -l 12G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=12288
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
           sudo swapon /swapfile
 
       - name: Instala dependências do sistema
-        # Inclui gettext para o comando 'autopoint' e libtool/autoconf para as receitas do p4a
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev \
-            libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev \
-            libavformat-dev libavcodec-dev zlib1g-dev libgstreamer1.0-dev \
-            gstreamer1.0-plugins-base gstreamer1.0-plugins-good libsqlite3-dev \
-            sqlite3 gettext libtool autoconf automake pkg-config zip unzip
+          sudo apt-get install -y build-essential git python3-dev ffmpeg libsdl2-dev \
+            libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev \
+            libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
+            libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+            libsqlite3-dev sqlite3 gettext libtool autoconf automake pkg-config zip unzip
 
       - name: Instala Buildozer e Cython
         run: |
@@ -52,13 +51,11 @@ jobs:
           pip install buildozer cython==0.29.33 git+https://github.com/kivy/python-for-android.git
 
       - name: Gerar APK com Buildozer
-        # Garante o uso do Java 17 para evitar erros de versão no Gradle
         run: |
           export JAVA_HOME=$JAVA_HOME_17_X64
           buildozer android debug
 
       - name: Upload do APK Gerado
-        # CORREÇÃO CRÍTICA: Atualizado para v4 conforme exigência do GitHub
         uses: actions/upload-artifact@v4
         with:
           name: Financas-2026-APK
