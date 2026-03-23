@@ -1,9 +1,22 @@
 import os
+import sys
 from kivy.utils import platform
 from kivymd.app import MDApp
 from kivymd.uix.screen import MDScreen
 from kivy.clock import Clock
 from kivymd.uix.bottomnavigation import MDBottomNavigation, MDBottomNavigationItem
+
+# --- SISTEMA DE LOG DE EMERGÊNCIA ---
+def capturar_erros():
+    """Redireciona erros para um arquivo de texto no Android"""
+    if platform == 'android':
+        from android.storage import app_storage_path
+        log_path = os.path.join(app_storage_path(), "erro_log.txt")
+        sys.stderr = open(log_path, "w")
+        sys.stdout = open(log_path, "w")
+
+# Executa o log antes de qualquer outra coisa
+capturar_erros()
 
 # Importando banco de dados
 from database import criar_tabela, criar_tabela_metas
@@ -15,16 +28,16 @@ from metas import MetasPage
 
 class AppFinancas(MDApp):
     def build(self):
-        # 1. Ajuste de Permissões para Android 11, 12 e 13
+        # 1. Ajuste de Permissões para Android 11+
         if platform == "android":
             from android.permissions import request_permissions, Permission
             request_permissions([
-                Permission.READ_EXTERNAL_STORAGE,
+                Permission.READ_EXTERNAL_STORAGE, 
                 Permission.WRITE_EXTERNAL_STORAGE,
                 Permission.MANAGE_EXTERNAL_STORAGE
             ])
 
-        # 2. Garante as tabelas no Android usando caminho persistente
+        # 2. Configuração do Banco de Dados Persistente
         self.configurar_banco()
         
         self.theme_cls.theme_style = "Dark"
@@ -61,10 +74,7 @@ class AppFinancas(MDApp):
         """Define o local correto do banco de dados no Android"""
         if platform == 'android':
             from android.storage import app_storage_path
-            path = app_storage_path()
-            # Se você usa uma variável global no 'database.py' para a conexão,
-            # certifique-se de que ela aponte para este 'path'
-            os.chdir(path) 
+            os.chdir(app_storage_path()) 
             
         criar_tabela()
         criar_tabela_metas()
@@ -79,4 +89,8 @@ class AppFinancas(MDApp):
         Clock.schedule_once(lambda dt: self.nav.switch_tab('item_dash'), 0.2)
 
 if __name__ == "__main__":
-    AppFinancas().run()
+    try:
+        AppFinancas().run()
+    except Exception as e:
+        # Se der erro fatal no PC ou Android, printa no terminal/log
+        print(f"ERRO FATAL: {e}")
