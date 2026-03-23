@@ -49,9 +49,12 @@ class AppFinancas(MDApp):
         return root
 
     def finalizar_cadastro(self, *args):
+        # Atualiza os dados nas outras abas
         self.dashboard.atualizar()
         if hasattr(self.tela_metas, 'atualizar_lista_metas'):
             self.tela_metas.atualizar_lista_metas()
+        
+        # Volta para a tela inicial automaticamente após cadastrar
         Clock.schedule_once(lambda dt: self.nav.switch_tab('item_dash'), 0.2)
 
 if __name__ == "__main__":
