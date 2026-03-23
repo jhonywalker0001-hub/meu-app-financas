@@ -1,11 +1,9 @@
-name: Build APK Financas 2026 - Tentativa 97
+name: Build APK Financas 2026 - Tentativa 98
 on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 120
-
     steps:
       - name: Checkout Código
         uses: actions/checkout@v4
@@ -21,12 +19,13 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Limpeza e Preparação
+      - name: Limpeza Profunda
         run: |
+          # Remove resquicios de NDK e SDK do runner
           sudo rm -rf /usr/local/lib/android/sdk/ndk
           sudo rm -rf /usr/local/lib/android/sdk/ndk-bundle
           rm -rf .buildozer
-          rm -rf bin
+          
           sudo apt-get update
           sudo apt-get install -y build-essential libffi-dev libssl-dev autoconf libtool pkg-config cmake
 
@@ -37,15 +36,14 @@ jobs:
 
       - name: Gerar APK
         run: |
-          # Swap de 8GB com verificação de arquivo existente para evitar erro "busy"
-          if [ ! -f /swapfile ]; then
-            sudo fallocate -l 8G /swapfile
-            sudo chmod 600 /swapfile
-            sudo mkswap /swapfile
-            sudo swapon /swapfile
-          fi
+          # Criando Swap para o Pandas (Vital para nao dar Crash)
+          sudo fallocate -l 10G /swapfile || true
+          sudo chmod 600 /swapfile || true
+          sudo mkswap /swapfile || true
+          sudo swapon /swapfile || true
           
           export JAVA_HOME=$JAVA_HOME_17_X64
           export PATH=$JAVA_HOME/bin:$PATH
           
+          # Comando com log limpo
           buildozer -v android debug
