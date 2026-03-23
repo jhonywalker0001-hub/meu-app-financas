@@ -1,4 +1,4 @@
-name: Build APK Financas 2026 - Tentativa 93
+name: Build APK Financas 2026 - Tentativa 94
 on: [push, workflow_dispatch]
 
 jobs:
@@ -21,30 +21,34 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Limpeza Profunda do Ambiente
+      - name: Purga de Conflitos e Dependências
         run: |
-          # Remove caches corrompidos de tentativas anteriores
+          # Remove SDK e NDK pré-instalados que causam erro de exit code 1
+          sudo rm -rf /usr/local/lib/android/sdk/ndk
+          sudo rm -rf /usr/local/lib/android/sdk/ndk-bundle
+          sudo rm -rf /usr/local/lib/android/sdk/tools
+          
+          # Limpeza de pastas locais para build virgem
           rm -rf .buildozer
           rm -rf bin
-          # Remove o NDK do sistema que causa conflito
-          sudo rm -rf /usr/local/lib/android/sdk/ndk
+          
           sudo apt-get update
           sudo apt-get install -y build-essential libffi-dev libssl-dev autoconf libtool pkg-config cmake
 
-      - name: Instala Ferramentas
+      - name: Instala Buildozer e Cython
         run: |
           pip install --upgrade Cython==0.29.33
           pip install buildozer
 
-      - name: Gerar APK
+      - name: Gerar APK (Forçando Ambiente Limpo)
         run: |
-          # Zera as variáveis para o Buildozer configurar o SDK do zero corretamente
+          # Remove variáveis que apontam para as ferramentas que acabamos de apagar
           unset ANDROID_NDK_ROOT
           unset ANDROID_SDK_ROOT
           unset ANDROID_HOME
           export ANDROID_NDK_HOME=""
           
-          # Swap para o Pandas não travar a RAM
+          # Swap de 8GB para compilação do Pandas
           sudo fallocate -l 8G /swapfile || true
           sudo chmod 600 /swapfile || true
           sudo mkswap /swapfile 2>/dev/null || true
