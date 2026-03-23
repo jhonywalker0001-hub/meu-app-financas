@@ -1,53 +1,48 @@
 from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.textfield import MDTextField
-from kivymd.uix.button import MDRaisedButton
+from kivymd.uix.snackbar import Snackbar
 from database import adicionar_transacao
-
+from datetime import datetime
 
 class AddTransacao(MDBoxLayout):
-
-    def __init__(self, dashboard, atualizar_lista, **kwargs):
-        super().__init__(orientation="vertical", padding=20, spacing=20, **kwargs)
-
-        self.dashboard = dashboard
-        self.atualizar_lista = atualizar_lista
-        self.tipo = "receita"
-
-        self.valor = MDTextField(
-            hint_text="Valor",
-            input_filter="float"
-        )
-
-        btn_receita = MDRaisedButton(
-            text="Receita",
-            on_release=lambda x: self.set_tipo("receita")
-        )
-
-        btn_despesa = MDRaisedButton(
-            text="Despesa",
-            on_release=lambda x: self.set_tipo("despesa")
-        )
-
-        btn_salvar = MDRaisedButton(
-            text="Salvar",
-            on_release=self.salvar
-        )
-
-        self.add_widget(self.valor)
-        self.add_widget(btn_receita)
-        self.add_widget(btn_despesa)
-        self.add_widget(btn_salvar)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.tipo = "receita" # Valor padrão
 
     def set_tipo(self, tipo):
         self.tipo = tipo
+        # Atualiza o texto do botão na interface se necessário
+        self.ids.btn_tipo.text = f"Tipo: {tipo.capitalize()}"
 
     def salvar(self, *args):
-        if self.valor.text == "":
+        # Captura os dados usando os IDs definidos no seu arquivo .kv
+        valor_texto = self.ids.campo_valor.text
+        descricao = self.ids.campo_desc.text
+        categoria = self.ids.campo_categoria.text
+        data_hoje = datetime.now().strftime("%Y-%m-%d")
+
+        if not valor_texto:
+            Snackbar(text="Por favor, insira um valor!").open()
             return
 
-        adicionar_transacao(self.tipo, float(self.valor.text))
+        try:
+            # Envia todos os dados para a função do banco de dados
+            adicionar_transacao(
+                tipo=self.tipo, 
+                valor=float(valor_texto), 
+                descricao=descricao if descricao else "Sem descrição",
+                categoria=categoria if categoria else "Geral",
+                data=data_hoje
+            )
 
-        self.dashboard.atualizar()
-        self.atualizar_lista()
+            # Limpa os campos após salvar
+            self.ids.campo_valor.text = ""
+            self.ids.campo_desc.text = ""
+            self.ids.campo_categoria.text = ""
+            
+            Snackbar(text="Transação salva com sucesso!").open()
+            
+            # Se tiver uma referência ao dashboard, atualize-o aqui
+            # self.dashboard.atualizar()
 
-        self.valor.text = ""
+        except Exception as e:
+            Snackbar(text=f"Erro ao salvar: {e}").open()
