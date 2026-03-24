@@ -1,4 +1,4 @@
-name: Build APK Financas 2026 - Versao Final
+name: Build APK Financas 2026
 
 on:
   push:
@@ -10,51 +10,54 @@ jobs:
 
     steps:
       - name: Checkout Código
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configura Java JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
       - name: Configura Python 3.10
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Limpeza e SWAP (12GB)
+      - name: Limpeza de NDKs pré-instalados
+        run: sudo rm -rf /usr/local/lib/android/sdk/ndk
+
+      - name: Cria arquivo de SWAP de 12GB
         run: |
-          sudo swapoff -a || true
-          sudo rm -f /swapfile
+          sudo swapoff -a
           sudo fallocate -l 12G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=12288
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
           sudo swapon /swapfile
 
-      - name: Instala dependências do sistema (Essenciais para Matplotlib/Pandas)
+      - name: Instala dependências do sistema
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential git python3-dev ffmpeg libsdl2-dev \
+          sudo apt-get install -y libunwind-dev
+          sudo apt-get install -y --fix-broken
+          sudo apt-get install -y \
+            python3-pip build-essential git python3-dev ffmpeg libsdl2-dev \
             libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev \
             libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
-            libgstreamer1.0-dev libunwind-dev gstreamer1.0-plugins-base \
-            gstreamer1.0-plugins-good libsqlite3-dev sqlite3 gettext libtool \
-            autoconf automake pkg-config zip unzip libmtdev-dev xclip xsel libjpeg-dev
+            libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good
 
       - name: Instala Buildozer e Cython
         run: |
           pip install --upgrade pip
-          pip install buildozer cython==0.29.33 git+https://github.com/kivy/python-for-android.git
+          pip install buildozer cython==0.29.33
 
       - name: Gerar APK com Buildozer
         run: |
-          export JAVA_HOME=$JAVA_HOME_17_X64
-          buildozer android clean
-          buildozer android debug
+          # Remove cache antigo para evitar FileNotFoundError
+          rm -rf .buildozer
+          buildozer -v android debug
 
-      - name: Upload do APK Gerado (Versao v4 corrigida)
+      - name: Upload do APK Gerado
         uses: actions/upload-artifact@v4
         with:
-          name: Financas-2026-APK
+          name: package
           path: bin/*.apk
