@@ -1,4 +1,4 @@
-name: Build APK Financas 2026 - Teste
+name: Build APK Financas 2026
 
 on:
   push:
@@ -13,17 +13,16 @@ jobs:
       - name: Checkout Código
         uses: actions/checkout@v4
 
-      - name: Verifica Arquivos Essenciais
+      - name: Verifica Estrutura
         run: |
-          echo "=== ESTRUTURA DO REPOSITÓRIO ==="
+          echo "=== ARQUIVOS NA RAIZ ==="
           ls -la
           echo ""
-          echo "=== VERIFICANDO ARQUIVOS ==="
-          test -f buildozer.spec && echo "✓ buildozer.spec encontrado" || (echo "✗ buildozer.spec NÃO ENCONTRADO" && exit 1)
-          test -f main.py && echo "✓ main.py encontrado" || (echo "✗ main.py NÃO ENCONTRADO" && exit 1)
+          echo "=== CONTEÚDO buildozer.spec (primeiras 20 linhas) ==="
+          head -20 buildozer.spec
           echo ""
-          echo "=== CONTEÚDO DO buildozer.spec ==="
-          cat buildozer.spec
+          echo "=== VERIFICA main.py ==="
+          test -f main.py && echo "✓ main.py OK" || echo "✗ main.py NÃO ENCONTRADO"
 
       - name: Configura Java JDK 17
         uses: actions/setup-java@v4
@@ -36,32 +35,53 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Cria SWAP de 8GB
-        run: |
-          sudo fallocate -l 8G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
-
-      - name: Instala Dependências
+      - name: Prepara Ambiente
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip python3-dev build-essential
+          sudo apt-get install -y python3-pip python3-dev build-essential git zip unzip
           sudo apt-get install -y libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+          sudo apt-get install -y libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev
+          sudo apt-get install -y zlib1g-dev libgstreamer1.0-dev gstreamer1.0-plugins-base
+
+      - name: Instala Buildozer
+        run: |
+          pip install --upgrade pip
           pip install buildozer "cython<3.0"
 
-      - name: Build APK
-        timeout-minutes: 60
+      - name: Inicializa Buildozer (baixa dependências)
         run: |
-          buildozer android debug 2>&1 | tee build.log || true
-          echo "=== RESULTADO ==="
-          ls -la bin/ 2>/dev/null || echo "bin/ não existe"
-          cat build.log | tail -100
+          # Primeiro comando só para baixar o python-for-android
+          buildozer android debug 2>&1 | head -50 || true
+          echo "Status após init:"
+          ls -la .buildozer/android/platform/ 2>/dev/null || echo "Ainda não criado"
 
-      - name: Upload Log
+      - name: Build APK
+        timeout-minutes: 90
+        run: |
+          buildozer android debug 2>&1 | tee build.log
+          
+      - name: Verifica Resultado
         if: always()
+        run: |
+          echo "=== PASTA BIN ==="
+          ls -la bin/ 2>/dev/null || echo "bin/ não existe"
+          echo ""
+          echo "=== PROCURA APK ==="
+          find . -name "*.apk" 2>/dev/null | head -10
+          echo ""
+          echo "=== ÚLTIMAS 50 LINHAS DO LOG ==="
+          tail -50 build.log
+
+      - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: build-log
+          name: Financas-APK
+          path: bin/*.apk
+
+      - name: Upload Log (se falhar)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-falha
           path: build.log
-          retention-days: 5
