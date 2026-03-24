@@ -73,21 +73,9 @@ jobs:
           pip install buildozer "cython<3.0"
           pip install numpy
 
-      - name: Inicializa Buildozer (Primeira Execução)
-        run: |
-          # Se não existe o python-for-android, inicializa primeiro
-          if [ ! -d ".buildozer/android/platform/python-for-android" ]; then
-            echo "Inicializando buildozer..."
-            buildozer android debug 2>&1 | head -100 || true
-            # Força parada após download, vamos limpar e rebuildar limpo
-            pkill -f buildozer || true
-            sleep 5
-          fi
-
       - name: Build APK com Buildozer
         timeout-minutes: 90
         run: |
-          # Agora sim faz o build limpo
           buildozer -v android debug 2>&1 | tee build.log
           ls -la bin/*.apk || (echo "ERRO: APK não gerado" && exit 1)
 
