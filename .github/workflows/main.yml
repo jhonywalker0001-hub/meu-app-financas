@@ -37,7 +37,8 @@ jobs:
       - name: Instala dependências do sistema
         run: |
           sudo apt-get update
-          sudo apt-get install -y libunwind-dev gettext libtool autoconf automake pkg-config
+          # A inclusão do gettext resolve o erro do 'autopoint'
+          sudo apt-get install -y gettext libunwind-dev libtool autoconf automake pkg-config
           sudo apt-get install -y --fix-broken
           sudo apt-get install -y \
             python3-pip build-essential git python3-dev ffmpeg libsdl2-dev \
@@ -52,7 +53,7 @@ jobs:
 
       - name: Gerar APK com Buildozer
         run: |
-          # Remove cache antigo para evitar FileNotFoundError
+          # Limpeza total para evitar conflitos de build anterior
           rm -rf .buildozer
           buildozer -v android debug
 
