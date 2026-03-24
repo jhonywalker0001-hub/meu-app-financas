@@ -3,40 +3,24 @@ name: Build APK - Minhas Finanças
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
 
 jobs:
   build:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Cache Buildozer (acelera bastante as builds)
+      - name: Cache
         uses: actions/cache@v4
         with:
           path: |
             .buildozer
             ~/.buildozer
-            ~/.cache/pip
-          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
-          restore-keys: |
-            ${{ runner.os }}-buildozer-
+          key: buildozer-${{ hashFiles('buildozer.spec') }}
 
-      - name: Build APK com Buildozer
+      - name: Build with Buildozer
         uses: ArtemSBulgakov/buildozer-action@v1
         with:
-          command: buildozer -v android debug
+          command: buildozer android debug
           buildozer_version: master
-          # Removemos python_version (causava warning)
-          # Adicionamos opções para corrigir problema de permissão (chown)
-          docker_image: ghcr.io/artemsbulgakov/buildozer-action:latest
-
-      - name: Upload APK
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: App-Financas-APK
-          path: bin/*.apk
