@@ -41,10 +41,11 @@ jobs:
           sudo apt-get clean
           df -h
 
-      - name: Cria SWAP de 16GB
+      - name: Cria SWAP de 20GB
         run: |
           sudo swapoff -a
-          sudo fallocate -l 16G /swapfile
+          sudo rm -f /swapfile
+          sudo fallocate -l 20G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=20480
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
           sudo swapon /swapfile
@@ -57,7 +58,7 @@ jobs:
 
       - name: Instala Dependências de Gráficos (Matplotlib)
         run: |
-          sudo apt-get install -y libfreetype6-dev libpng-dev
+          sudo apt-get install -y libfreetype6-dev libpng-dev libjpeg-dev
 
       - name: Instala Dependências Kivy
         run: |
@@ -73,18 +74,24 @@ jobs:
           pip install buildozer "cython<3.0"
           pip install numpy
 
-      - name: Build APK com Buildozer
-        timeout-minutes: 90
+      - name: Limpa Build Anterior (se existir)
         run: |
-          buildozer -v android debug 2>&1 | tee build.log
-          echo "=== ÚLTIMAS 200 LINHAS DO LOG ==="
-          tail -200 build.log
-          echo "=== VERIFICANDO ERROS COMUNS ==="
-          grep -i "error\|failed\|exception\|no such file" build.log | tail -50 || true
-          echo "=== CONTEÚDO DO BIN ==="
-          ls -la bin/ 2>/dev/null || echo "Pasta bin não existe"
-          echo "=== CONTEÚDO DO BUILD ==="
-          ls -la .buildozer/android/platform/build-arm64-v8a/dists/ 2>/dev/null || echo "Pasta dists não existe"
+          rm -rf .buildozer/android/platform/build-arm64-v8a/build/
+          rm -rf .buildozer/android/app/
+          mkdir -p bin
+
+      - name: Build APK com Buildozer
+        timeout-minutes: 120
+        run: |
+          buildozer android debug 2>&1 | tee build.log || true
+          echo "=== VERIFICANDO RESULTADO ==="
+          ls -la bin/ 2>/dev/null || echo "Pasta bin vazia ou não existe"
+          find .buildozer -name "*.apk" 2>/dev/null | head -5 || echo "Nenhum APK encontrado no buildozer"
+
+      - name: Copia APK se gerado em outro lugar
+        run: |
+          find .buildozer -name "*.apk" -exec cp {} bin/ \; 2>/dev/null || true
+          ls -la bin/
 
       - name: Upload do Log de Build (sempre)
         if: always()
