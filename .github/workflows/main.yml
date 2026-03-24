@@ -20,23 +20,60 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Instalar dependências
+      - name: Instalar dependências do sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-pil \
+            libgl1-mesa-glx \
+            libglib2.0-0 \
+            libsm6 \
+            libxext6 \
+            libxrender-dev \
+            libmtdev1
+
+      - name: Instalar pacotes Python
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          else
-            echo "requirements.txt não encontrado"
-          fi
+          pip install kivy kivymd matplotlib pillow
 
-      - name: Verificar importações do app
+      - name: Configurar Kivy para ambiente headless (sem tela)
+        run: |
+          mkdir -p ~/.kivy
+          cat > ~/.kivy/config.ini << EOF
+          [graphics]
+          fullscreen = 0
+          width = 800
+          height = 600
+          fbo = force
+          [input]
+          mouse = mouse
+          mtdev = ""
+          [postproc]
+          doubletap_time = 0
+          [kivy]
+          log_level = warning
+          EOF
+
+      - name: Testar importações e inicialização básica
         run: |
           python -c '
-          import sys
-          print("Python version:", sys.version)
+          import os
+          os.environ["KIVY_NO_ARGS"] = "1"
+          os.environ["KIVY_NO_CONSOLE_LOG"] = "1"
+          
+          print("Testando importações...")
           from kivymd.app import MDApp
           from dashboard import Dashboard
           from transacoes import TelaTransacoes
           from add_transacao import AddTransacao
-          print("✅ Todas as importações principais estão funcionando!")
+          
+          print("✅ Todas as importações OK")
+          
+          # Teste leve de criação do Dashboard sem rodar o app
+          print("Testando criação do Dashboard...")
+          dashboard = Dashboard()
+          print("✅ Dashboard criado com sucesso")
+          
+          print("🎉 Tudo passou nos testes!")
           '
