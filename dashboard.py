@@ -11,8 +11,7 @@ from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.textfield import MDTextField
 from kivy.clock import Clock
 import io 
-import tkinter as tk
-from tkinter import filedialog
+import os # Importado para as linhas do GitHub Actions
 from kivy.core.image import Image as CoreImage 
 from datetime import datetime
 
@@ -25,7 +24,13 @@ from database import (
 
 class Dashboard(MDBoxLayout):
     def __init__(self, **kwargs):
-        super().__init__(orientation="vertical", padding=15, spacing=10, **kwargs)
+        # --- LINHAS SOLICITADAS ---
+        # Evita erro no GitHub Actions (headless)
+        import os
+        os.environ["KIVY_NO_ARGS"] = "1"
+        
+        super().__init__(orientation="vertical", padding=[20, 20, 20, 20], spacing=25, **kwargs)
+        # ---------------------------
 
         # 1. CARD DE SALDO
         self.card = MDCard(
@@ -153,7 +158,6 @@ class Dashboard(MDBoxLayout):
     def abrir_dialogo_edicao(self, trans):
         layout = MDBoxLayout(orientation="vertical", spacing="12dp", size_hint_y=None, height="280dp")
         
-        # Implementando o campo limpo: text='' e o valor antigo vai para o hint_text
         self.edit_desc = MDTextField(text=str(trans['descricao']), hint_text="Descrição")
         self.edit_valor = MDTextField(
             text="", 
@@ -182,7 +186,6 @@ class Dashboard(MDBoxLayout):
 
     def salvar_edicao(self, id_t, tipo_t, valor_antigo):
         try:
-            # Se o campo de valor estiver vazio, mantém o valor antigo
             novo_valor = float(self.edit_valor.text) if self.edit_valor.text else valor_antigo
             
             atualizar_transacao(id_t, tipo_t, novo_valor, 
@@ -216,22 +219,34 @@ class Dashboard(MDBoxLayout):
     def preparar_salvamento(self, mes_selecionado):
         self.dialog_mes.dismiss()
         try:
-            root = tk.Tk(); root.withdraw(); root.attributes("-topmost", True)
-            caminho = filedialog.asksaveasfilename(initialfile=f"Relatorio_{mes_selecionado.replace('/', '_')}",
-                defaultextension=".pdf", filetypes=[("PDF", "*.pdf"), ("Excel", "*.xlsx")])
-            root.destroy()
-            if caminho:
-                if caminho.endswith(".pdf"): exportar_para_pdf(caminho, mes_selecionado)
-                else: exportar_para_excel(caminho, mes_selecionado)
-                Snackbar(text=f"Salvo!", bg_color=(0, 0.6, 0.3, 1)).open()
-        except: Snackbar(text="Erro ao exportar").open()
+            # ALERTA: Tkinter não funciona no Android. 
+            # Se estiver no Android, vamos salvar direto na pasta Downloads.
+            if os.name != 'nt': # Se não for Windows (ex: Android)
+                from android.storage import primary_external_storage_path
+                downloads_path = os.path.join(primary_external_storage_path(), 'Download')
+                nome_arq = f"Relatorio_{mes_selecionado.replace('/', '_')}.pdf"
+                caminho = os.path.join(downloads_path, nome_arq)
+                exportar_para_pdf(caminho, mes_selecionado)
+                Snackbar(text=f"Salvo em Downloads!", bg_color=(0, 0.6, 0.3, 1)).open()
+            else:
+                import tkinter as tk
+                from tkinter import filedialog
+                root = tk.Tk(); root.withdraw(); root.attributes("-topmost", True)
+                caminho = filedialog.asksaveasfilename(initialfile=f"Relatorio_{mes_selecionado.replace('/', '_')}",
+                    defaultextension=".pdf", filetypes=[("PDF", "*.pdf"), ("Excel", "*.xlsx")])
+                root.destroy()
+                if caminho:
+                    if caminho.endswith(".pdf"): exportar_para_pdf(caminho, mes_selecionado)
+                    else: exportar_para_excel(caminho, mes_selecionado)
+                    Snackbar(text=f"Salvo!", bg_color=(0, 0.6, 0.3, 1)).open()
+        except Exception as e: 
+            Snackbar(text=f"Erro ao exportar: {str(e)}").open()
 
     def formatar(self, valor):
         return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
     def atualizar(self, *args):
         saldo = calcular_saldo()
-        # Saldo Inteligente: Verde para positivo, Vermelho para negativo
         self.label_saldo.text_color = (0, 0.8, 0.4, 1) if saldo >= 0 else (1, 0.3, 0.3, 1)
         self.label_saldo.text = self.formatar(saldo)
         self.criar_grafico()
