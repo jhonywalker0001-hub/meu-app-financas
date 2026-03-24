@@ -23,10 +23,11 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Limpeza de NDKs e Cache
+      - name: Limpeza Inicial de Espaço
         run: |
           sudo rm -rf /usr/local/lib/android/sdk/ndk
-          rm -rf .buildozer
+          # Não apague a pasta .buildozer com rm -rf para evitar FileNotFoundError
+          # O buildozer cuidará da estrutura interna.
 
       - name: Cria arquivo de SWAP de 12GB
         run: |
@@ -36,14 +37,15 @@ jobs:
           sudo mkswap /swapfile
           sudo swapon /swapfile
 
-      - name: Instala Dependências Críticas (Autopoint Fix)
+      - name: Instala Ferramentas de Compilação (Fix Autopoint)
         run: |
           sudo apt-get update
           sudo apt-get install -y gettext libunwind-dev libtool autoconf automake pkg-config build-essential
-          # Verifica se o autopoint está instalado
-          which autopoint || (echo "ERRO: autopoint nao instalado" && exit 1)
+          # Garante que o autopoint seja reconhecido globalmente pelo PATH
+          sudo apt-get install --reinstall gettext
+          which autopoint || (sudo ln -s /usr/bin/autopoint /usr/local/bin/autopoint)
 
-      - name: Instala Dependências do Sistema Kivy
+      - name: Instala Dependências Kivy e Gráficas
         run: |
           sudo apt-get install -y --fix-broken
           sudo apt-get install -y \
@@ -52,17 +54,19 @@ jobs:
             libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
             libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good
 
-      - name: Instala Buildozer e Cython
+      - name: Instala Buildozer e Cython Estável
         run: |
           pip install --upgrade pip
           pip install buildozer "cython<3.0"
 
       - name: Gerar APK com Buildozer
         run: |
+          # Comando oficial para limpar builds anteriores sem quebrar a estrutura de pastas
+          buildozer android clean
           buildozer -v android debug
 
       - name: Upload do APK Gerado
         uses: actions/upload-artifact@v4
         with:
-          name: package
+          name: Financas-App-2026
           path: bin/*.apk
