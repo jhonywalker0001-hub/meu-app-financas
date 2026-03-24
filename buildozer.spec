@@ -17,6 +17,7 @@ android.minapi = 21
 android.enable_androidx = True
 android.archs = arm64-v8a
 android.accept_sdk_license = True
+android.gradle_options = org.gradle.jvmargs=-Xmx4096m
 
 [buildozer]
 log_level = 2
