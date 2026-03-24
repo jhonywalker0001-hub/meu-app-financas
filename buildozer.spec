@@ -6,18 +6,16 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,ttf
 version = 1.0.0
 
-requirements = python3,kivy==2.2.1,kivymd==1.1.1,matplotlib,numpy,pandas,pytz,openpyxl,fpdf2,pillow,cycler,kiwisolver,pyparsing,python-dateutil,six
+# SEM matplotlib por enquanto
+requirements = python3,kivy==2.2.1,kivymd==1.1.1,fpdf2,openpyxl
 
 orientation = portrait
 fullscreen = 0
 
-android.permissions = WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE,INTERNET
+android.permissions = INTERNET
 android.api = 33
 android.minapi = 21
-android.enable_androidx = True
 android.archs = arm64-v8a
-android.accept_sdk_license = True
-android.gradle_options = org.gradle.jvmargs=-Xmx4096m
 
 [buildozer]
 log_level = 2
