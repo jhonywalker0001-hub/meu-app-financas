@@ -23,8 +23,10 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Limpeza de NDKs pré-instalados
-        run: sudo rm -rf /usr/local/lib/android/sdk/ndk
+      - name: Limpeza de NDKs e Cache
+        run: |
+          sudo rm -rf /usr/local/lib/android/sdk/ndk
+          rm -rf .buildozer
 
       - name: Cria arquivo de SWAP de 12GB
         run: |
@@ -34,14 +36,18 @@ jobs:
           sudo mkswap /swapfile
           sudo swapon /swapfile
 
-      - name: Instala dependências do sistema
+      - name: Instala Dependências Críticas (Autopoint Fix)
         run: |
           sudo apt-get update
-          # A inclusão do gettext resolve o erro do 'autopoint'
-          sudo apt-get install -y gettext libunwind-dev libtool autoconf automake pkg-config
+          sudo apt-get install -y gettext libunwind-dev libtool autoconf automake pkg-config build-essential
+          # Verifica se o autopoint está instalado
+          which autopoint || (echo "ERRO: autopoint nao instalado" && exit 1)
+
+      - name: Instala Dependências do Sistema Kivy
+        run: |
           sudo apt-get install -y --fix-broken
           sudo apt-get install -y \
-            python3-pip build-essential git python3-dev ffmpeg libsdl2-dev \
+            python3-pip python3-dev ffmpeg libsdl2-dev \
             libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev \
             libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
             libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good
@@ -49,12 +55,10 @@ jobs:
       - name: Instala Buildozer e Cython
         run: |
           pip install --upgrade pip
-          pip install buildozer cython==0.29.33
+          pip install buildozer "cython<3.0"
 
       - name: Gerar APK com Buildozer
         run: |
-          # Limpeza total para evitar conflitos de build anterior
-          rm -rf .buildozer
           buildozer -v android debug
 
       - name: Upload do APK Gerado
