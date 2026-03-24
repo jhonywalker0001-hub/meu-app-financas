@@ -13,6 +13,18 @@ jobs:
       - name: Checkout Código
         uses: actions/checkout@v4
 
+      - name: Verifica Arquivos Essenciais
+        run: |
+          echo "=== ESTRUTURA DO REPOSITÓRIO ==="
+          ls -la
+          echo ""
+          echo "=== VERIFICANDO ARQUIVOS ==="
+          test -f buildozer.spec && echo "✓ buildozer.spec encontrado" || (echo "✗ buildozer.spec NÃO ENCONTRADO" && exit 1)
+          test -f main.py && echo "✓ main.py encontrado" || (echo "✗ main.py NÃO ENCONTRADO" && exit 1)
+          echo ""
+          echo "=== CONTEÚDO DO buildozer.spec ==="
+          cat buildozer.spec
+
       - name: Configura Java JDK 17
         uses: actions/setup-java@v4
         with:
@@ -41,10 +53,15 @@ jobs:
       - name: Build APK
         timeout-minutes: 60
         run: |
-          buildozer android debug 2>&1 | tail -300
+          buildozer android debug 2>&1 | tee build.log || true
+          echo "=== RESULTADO ==="
+          ls -la bin/ 2>/dev/null || echo "bin/ não existe"
+          cat build.log | tail -100
 
-      - name: Upload APK
+      - name: Upload Log
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: apk-teste
-          path: bin/*.apk
+          name: build-log
+          path: build.log
+          retention-days: 5
