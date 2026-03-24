@@ -14,7 +14,7 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Cache Buildozer (acelera builds seguintes)
+      - name: Cache Buildozer
         uses: actions/cache@v4
         with:
           path: |
@@ -34,15 +34,13 @@ jobs:
         run: |
           pip3 install --user buildozer cython==0.29.36
 
-      - name: Build APK com Buildozer
+      - name: Build APK
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          # Corrige permissões (resolve o erro de chown)
           sudo chown -R $USER:$USER .
-          # Aceita automaticamente todas as licenças do Android
           yes | buildozer -v android debug
 
-      - name: Upload do APK gerado
+      - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
