@@ -1,4 +1,4 @@
-name: Build APK Financas 2026 - Tentativa 104
+name: Build APK Financas 2026 - Versao Final
 
 on:
   push:
@@ -23,21 +23,16 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Limpeza de Ambiente e Swap
+      - name: Limpeza e SWAP (12GB)
         run: |
           sudo swapoff -a || true
           sudo rm -f /swapfile
-          sudo rm -rf /usr/local/lib/android/sdk/ndk/*
-          sudo rm -rf .buildozer
-
-      - name: Cria arquivo de SWAP de 12GB
-        run: |
           sudo fallocate -l 12G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=12288
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
           sudo swapon /swapfile
 
-      - name: Instala dependências do sistema
+      - name: Instala dependências do sistema (Essenciais para Matplotlib/Pandas)
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential git python3-dev ffmpeg libsdl2-dev \
@@ -45,7 +40,7 @@ jobs:
             libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
             libgstreamer1.0-dev libunwind-dev gstreamer1.0-plugins-base \
             gstreamer1.0-plugins-good libsqlite3-dev sqlite3 gettext libtool \
-            autoconf automake pkg-config zip unzip
+            autoconf automake pkg-config zip unzip libmtdev-dev xclip xsel libjpeg-dev
 
       - name: Instala Buildozer e Cython
         run: |
@@ -58,7 +53,7 @@ jobs:
           buildozer android clean
           buildozer android debug
 
-      - name: Upload do APK Gerado
+      - name: Upload do APK Gerado (Versao v4 corrigida)
         uses: actions/upload-artifact@v4
         with:
           name: Financas-2026-APK
