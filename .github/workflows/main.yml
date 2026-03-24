@@ -3,6 +3,7 @@ name: Build APK Financas 2026
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -11,6 +12,14 @@ jobs:
     steps:
       - name: Checkout Código
         uses: actions/checkout@v4
+
+      - name: Cache Buildozer
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.buildozer
+            .buildozer
+          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
 
       - name: Configura Java JDK 17
         uses: actions/setup-java@v4
@@ -23,50 +32,59 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Limpeza Inicial de Espaço
+      - name: Limpeza de Espaço
         run: |
           sudo rm -rf /usr/local/lib/android/sdk/ndk
-          # Não apague a pasta .buildozer com rm -rf para evitar FileNotFoundError
-          # O buildozer cuidará da estrutura interna.
+          sudo rm -rf /opt/hostedtoolcache
+          sudo apt-get clean
+          df -h
 
-      - name: Cria arquivo de SWAP de 12GB
+      - name: Cria SWAP de 16GB
         run: |
           sudo swapoff -a
-          sudo fallocate -l 12G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=12288
+          sudo fallocate -l 16G /swapfile
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
           sudo swapon /swapfile
+          free -h
 
-      - name: Instala Ferramentas de Compilação (Fix Autopoint)
+      - name: Instala Ferramentas de Compilação
         run: |
           sudo apt-get update
           sudo apt-get install -y gettext libunwind-dev libtool autoconf automake pkg-config build-essential
-          # Garante que o autopoint seja reconhecido globalmente pelo PATH
-          sudo apt-get install --reinstall gettext
-          which autopoint || (sudo ln -s /usr/bin/autopoint /usr/local/bin/autopoint)
 
-      - name: Instala Dependências Kivy e Gráficas
+      - name: Instala Dependências de Gráficos (Matplotlib)
         run: |
-          sudo apt-get install -y --fix-broken
+          sudo apt-get install -y libfreetype6-dev libpng-dev
+
+      - name: Instala Dependências Kivy
+        run: |
           sudo apt-get install -y \
             python3-pip python3-dev ffmpeg libsdl2-dev \
             libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev \
             libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev \
             libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good
 
-      - name: Instala Buildozer e Cython Estável
+      - name: Instala Buildozer e Dependências Python
         run: |
           pip install --upgrade pip
           pip install buildozer "cython<3.0"
+          pip install numpy
 
-      - name: Gerar APK com Buildozer
+      - name: Verifica buildozer.spec
         run: |
-          # Comando oficial para limpar builds anteriores sem quebrar a estrutura de pastas
-          buildozer android clean
-          buildozer -v android debug
+          test -f buildozer.spec || (echo "ERRO: buildozer.spec não encontrado!" && exit 1)
 
-      - name: Upload do APK Gerado
+      - name: Build APK com Buildozer
+        timeout-minutes: 60
+        run: |
+          buildozer android clean
+          buildozer -v android debug 2>&1 | tee build.log
+          ls -la bin/*.apk || (echo "ERRO: APK não gerado" && exit 1)
+
+      - name: Upload do APK
         uses: actions/upload-artifact@v4
         with:
           name: Financas-App-2026
           path: bin/*.apk
+          retention-days: 30
