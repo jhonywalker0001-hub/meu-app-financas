@@ -1,23 +1,22 @@
 [app]
-title = Minhas Financas 2026
-package.name = appfinancas
-package.domain = org.jhonywalker
+title = Minhas Finanças
+package.name = financas
+package.domain = org.jhony
 source.dir = .
-source.include_exts = py,png,jpg,kv,atlas,ttf
-version = 1.0.0
+source.include_exts = py,png,jpg,kv
+version = 1.0
 
-# SEM matplotlib por enquanto - só o essencial
-requirements = python3,kivy==2.2.1,kivymd==1.1.1,fpdf2,openpyxl,pillow
+requirements = python3,kivy==2.3.0,kivymd==2.0.1.dev0,matplotlib,pillow
 
 orientation = portrait
 fullscreen = 0
 
-android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
+# Para acelerar a build (importante!)
+android.permissions = INTERNET
 android.api = 33
 android.minapi = 21
-android.archs = arm64-v8a
-android.accept_sdk_license = True
+p4a.branch = master
+p4a.bootstrap = sdl2
 
-[buildozer]
-log_level = 2
-warn_on_root = 0
+# Se você usa matplotlib, pode precisar disso:
+osx.python_version = 3.10
