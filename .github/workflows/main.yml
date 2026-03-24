@@ -23,24 +23,20 @@ jobs:
       - name: Instalar dependências
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt || echo "requirements.txt não encontrado, pulando..."
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            echo "requirements.txt não encontrado"
+          fi
 
-      - name: Rodar testes / verificação
+      - name: Verificar importações do app
         run: |
-          echo "=== Verificando se o app importa corretamente ==="
-          python -c "
+          python -c '
+          import sys
+          print("Python version:", sys.version)
           from kivymd.app import MDApp
           from dashboard import Dashboard
           from transacoes import TelaTransacoes
           from add_transacao import AddTransacao
-          print('✅ Todas as importações principais funcionam!')
-          " || echo "❌ Erro de importação detectado"
-
-      - name: Upload log em caso de falha
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: error-log
-          path: |
-            *.log
-            build.log
+          print("✅ Todas as importações principais estão funcionando!")
+          '
