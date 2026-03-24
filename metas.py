@@ -1,12 +1,13 @@
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.list import MDList, IconLeftWidget, TwoLineAvatarListItem
-from kivy.uix.scrollview import ScrollView
+from kivymd.uix.scrollview import ScrollView
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.snackbar import Snackbar
 from kivy.clock import Clock
 
+# Importando as funções do banco que já criamos
 from database import definir_meta, obter_metas, listar_transacoes
 
 class MetasPage(MDBoxLayout):
@@ -18,16 +19,19 @@ class MetasPage(MDBoxLayout):
         self.scroll.add_widget(self.lista_metas)
         self.add_widget(self.scroll)
         
+        # Atualiza a lista sempre que a aba for aberta
         Clock.schedule_once(lambda dt: self.atualizar_lista_metas())
 
     def atualizar_lista_metas(self, *args):
         self.lista_metas.clear_widgets()
         
-        # Recupera dados do banco blindado
+        # Pegamos os limites definidos e as transações para calcular o gasto real
         metas_definidas = obter_metas()
         transacoes = listar_transacoes()
         
+        # Categorias padrão do seu app
         categorias = ["Alimentação", "Transporte", "Lazer", "Casa", "Saúde", "Outros"]
+        
         icones = {
             "Alimentação": "food", "Transporte": "car", 
             "Lazer": "controller-classic", "Casa": "home", 
@@ -36,11 +40,8 @@ class MetasPage(MDBoxLayout):
 
         for cat in categorias:
             limite = metas_definidas.get(cat, 0.0)
-            # Soma despesas usando a lógica do listar_transacoes
-            gasto_atual = sum(t['valor'] for t in transacoes if t['categoria'] == cat and t['tipo'].lower() == 'despesa')
-            
-            # Alerta visual se ultrapassar o limite
-            cor_icone = (1, 0.3, 0.3, 1) if gasto_atual > limite and limite > 0 else (0, 0.8, 0.4, 1)
+            # Soma apenas as despesas dessa categoria
+            gasto_atual = sum(t['valor'] for t in transacoes if t['categoria'] == cat and t['tipo'] == 'despesa')
             
             item = TwoLineAvatarListItem(
                 text=f"{cat}",
@@ -48,36 +49,28 @@ class MetasPage(MDBoxLayout):
                 on_release=lambda x, c=cat, l=limite: self.abrir_dialogo_meta(c, l)
             )
             
-            icone = IconLeftWidget(
-                icon=icones.get(cat, "tag"),
-                theme_text_color="Custom",
-                text_color=cor_icone
-            )
+            icone = IconLeftWidget(icon=icones.get(cat, "tag"))
             item.add_widget(icone)
             self.lista_metas.add_widget(item)
 
     def abrir_dialogo_meta(self, categoria, limite_atual):
-        # Campo customizado para o diálogo
+        # Mudamos 'text' para vazio e colocamos o valor antigo no 'hint_text'
         self.campo_limite = MDTextField(
-            text=str(limite_atual) if limite_atual > 0 else "", 
-            hint_text=f"Definir limite para {categoria}",
+            text="", 
+            hint_text=f"Novo limite (Atual: R$ {limite_atual:.2f})",
             input_filter="float",
-            mode="rectangle"
+            helper_text="Digite o valor e clique em DEFINIR",
+            helper_text_mode="on_focus"
         )
         
         self.dialogo = MDDialog(
-            title="Ajustar Meta Mensal",
+            title=f"Definir Meta: {categoria}",
             type="custom",
             content_cls=self.campo_limite,
-            size_hint=(0.8, None),
             buttons=[
                 MDFlatButton(text="CANCELAR", on_release=lambda x: self.dialogo.dismiss()),
-                MDFlatButton(
-                    text="DEFINIR", 
-                    theme_text_color="Custom", 
-                    text_color=(0, 0.8, 0.4, 1),
-                    on_release=lambda x: self.salvar_meta(categoria)
-                )
+                MDFlatButton(text="DEFINIR", theme_text_color="Custom", text_color=(0, 0.8, 0.4, 1),
+                             on_release=lambda x: self.salvar_meta(categoria))
             ]
         )
         self.dialogo.open()
@@ -91,4 +84,4 @@ class MetasPage(MDBoxLayout):
                 self.atualizar_lista_metas()
                 Snackbar(text=f"Meta de {categoria} atualizada!").open()
             except ValueError:
-                Snackbar(text="Digite um valor numérico válido.").open()
+                Snackbar(text="Digite um valor válido.").open()
