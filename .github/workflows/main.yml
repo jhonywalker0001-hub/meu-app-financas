@@ -20,27 +20,31 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Instalar dependências do sistema
+      - name: Instalar dependências do sistema (Ubuntu 24.04)
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             python3-pil \
-            libgl1-mesa-glx \
             libglib2.0-0 \
             libsm6 \
             libxext6 \
             libxrender-dev \
-            libmtdev1
+            libmtdev1 \
+            libegl1 \
+            libgles2 \
+            libgl1 \
+            xvfb \
+            x11-utils
 
       - name: Instalar pacotes Python
         run: |
           python -m pip install --upgrade pip
           pip install kivy kivymd matplotlib pillow
 
-      - name: Configurar Kivy para ambiente headless (sem tela)
+      - name: Configurar Kivy para rodar sem tela (Headless)
         run: |
           mkdir -p ~/.kivy
-          cat > ~/.kivy/config.ini << EOF
+          cat > ~/.kivy/config.ini << 'EOF'
           [graphics]
           fullscreen = 0
           width = 800
@@ -48,32 +52,36 @@ jobs:
           fbo = force
           [input]
           mouse = mouse
-          mtdev = ""
+          mtdev = 
           [postproc]
           doubletap_time = 0
           [kivy]
           log_level = warning
           EOF
 
-      - name: Testar importações e inicialização básica
+      - name: Testar importações e Dashboard
         run: |
           python -c '
           import os
           os.environ["KIVY_NO_ARGS"] = "1"
           os.environ["KIVY_NO_CONSOLE_LOG"] = "1"
-          
+          os.environ["DISPLAY"] = ":99"
+
+          print("Iniciando Xvfb...")
+          import subprocess
+          subprocess.run(["Xvfb", ":99", "-screen", "0", "1024x768x24"], check=True)
+
           print("Testando importações...")
           from kivymd.app import MDApp
           from dashboard import Dashboard
           from transacoes import TelaTransacoes
           from add_transacao import AddTransacao
-          
-          print("✅ Todas as importações OK")
-          
-          # Teste leve de criação do Dashboard sem rodar o app
-          print("Testando criação do Dashboard...")
+
+          print("✅ Importações OK")
+
+          print("Criando Dashboard...")
           dashboard = Dashboard()
-          print("✅ Dashboard criado com sucesso")
-          
-          print("🎉 Tudo passou nos testes!")
+          print("✅ Dashboard criado com sucesso!")
+
+          print("🎉 Todos os testes passaram!")
           '
